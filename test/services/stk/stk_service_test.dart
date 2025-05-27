@@ -8,8 +8,10 @@ import 'package:k2_connect_flutter/src/shared/amount.dart';
 import 'package:k2_connect_flutter/src/stk/models/stk_push_request.dart';
 import 'package:k2_connect_flutter/src/stk/models/subscriber.dart';
 import 'package:k2_connect_flutter/src/stk/services/stk_service.dart';
-import 'package:k2_connect_flutter/src/stk/views/widgets/error_request_payment.dart';
+import 'package:k2_connect_flutter/src/stk/views/widgets/request_payment_alert.dart';
 import 'package:k2_connect_flutter/src/stk/views/widgets/request_payment_section.dart';
+import 'package:k2_connect_flutter/src/stk/views/widgets/request_payment_status.dart';
+import 'package:k2_connect_flutter/src/stk/views/widgets/success_request_payment.dart';
 import 'package:k2_connect_flutter/src/utils/utils.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -90,9 +92,11 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ErrorRequestPayment(
-              error: 'Test error occurred',
-              onError: () {
+            body: RequestPaymentAlert(
+              iconColour: K2Colors.error,
+              label: 'Payment declined',
+              description: 'Test error occurred',
+              action: () {
                 onErrorCalled = true;
               },
             ),
@@ -109,21 +113,89 @@ void main() {
 
       expect(onErrorCalled, isTrue);
     });
+  });
 
-    testWidgets('renders fallback error message when error is null',
+  group('Success request payment widget', () {
+    testWidgets('renders success message and countdown',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ErrorRequestPayment(
-              error: null,
-              onError: () {},
+            body: SuccessRequestPayment(
+              companyName: fakeCompanyName,
+              amount: fakeAmount,
+              onSuccess: () {},
             ),
           ),
         ),
       );
 
-      expect(find.text('An error occurred'), findsOneWidget);
+      final richTexts =
+          tester.widgetList<RichText>(find.byType(RichText)).toList();
+
+      final matches = richTexts.where((richText) {
+        final span = richText.text as TextSpan;
+        final combined = span.children?.map((s) => s.toPlainText()).join() ??
+            span.toPlainText();
+        return combined ==
+            'You have paid ${AppConfig.defaultDisplayCurrency} $fakeAmount to $fakeCompanyName.';
+      });
+
+      expect(matches.length, 1,
+          reason: 'Should find exactly one success message RichText');
+
+      final match = matches.single;
+      final span = match.text as TextSpan;
+      final combined = span.children?.map((s) => s.toPlainText()).join() ??
+          span.toPlainText();
+
+      expect(
+        combined,
+        'You have paid ${AppConfig.defaultDisplayCurrency} $fakeAmount to $fakeCompanyName.',
+      );
+      expect(find.textContaining('Redirecting'), findsOneWidget);
+      expect(find.text('Done'), findsOneWidget);
+    });
+
+    testWidgets('calls onSuccess when Done is tapped',
+        (WidgetTester tester) async {
+      bool onSuccessCalled = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SuccessRequestPayment(
+              companyName: fakeCompanyName,
+              amount: fakeAmount,
+              onSuccess: () {
+                onSuccessCalled = true;
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.text('Done'));
+      await tester.pumpAndSettle();
+
+      expect(onSuccessCalled, isTrue);
+    });
+  });
+
+  group('Request payment status widget', () {
+    testWidgets('shows progress indicator and message',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: RequestPaymentStatus(),
+          ),
+        ),
+      );
+
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      expect(find.text('Processing payment'), findsOneWidget);
     });
   });
 
@@ -234,6 +306,211 @@ void main() {
         expect(body['error_message'],
             equals('Subscriber phone number is an invalid number'));
         expect(response?.statusCode, equals(400));
+      });
+    });
+
+    group('Valid request status', () {
+      setUp(() {
+        request = StkPushRequest(
+            tillNumber: fakeTillNumber,
+            subscriber: Subscriber(phoneNumber: fakePhoneNumber),
+            amount: Amount(value: fakeAmount),
+            callbackUrl: '',
+            accessToken: fakeAccessToken);
+
+        stkService = StkService(
+          client: mockClient,
+          baseUrl: fakeBaseUrl,
+        );
+      });
+
+      test('returns received', () async {
+        final uri = Uri.parse(fakeRequestStatusEndpoint);
+
+        final String jsonResponse =
+            File('./test/services/stk/request_status_received.json')
+                .readAsStringSync();
+
+        when(mockClient.get(
+          headers: {
+            'Authorization': 'Bearer ${request.accessToken}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          uri,
+        )).thenAnswer(
+          (_) async => http.Response(jsonResponse, 200),
+        );
+
+        final response = await stkService.requestStatus(
+          uri: fakeRequestStatusEndpoint,
+          accessToken: request.accessToken,
+        );
+
+        verify(mockClient.get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer ${request.accessToken}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        )).called(1);
+
+        expect(response.attributes.status, equals('Received'));
+      });
+    });
+
+    group('Pending request status', () {
+      setUp(() {
+        request = StkPushRequest(
+            tillNumber: fakeTillNumber,
+            subscriber: Subscriber(phoneNumber: fakePhoneNumber),
+            amount: Amount(value: fakeAmount),
+            callbackUrl: '',
+            accessToken: fakeAccessToken);
+
+        stkService = StkService(
+          client: mockClient,
+          baseUrl: fakeBaseUrl,
+        );
+      });
+
+      test('returns pending', () async {
+        final uri = Uri.parse(fakeRequestStatusEndpoint);
+
+        final String jsonResponse =
+            File('./test/services/stk/request_status_pending.json')
+                .readAsStringSync();
+
+        when(mockClient.get(
+          headers: {
+            'Authorization': 'Bearer ${request.accessToken}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          uri,
+        )).thenAnswer(
+          (_) async => http.Response(jsonResponse, 200),
+        );
+
+        final response = await stkService.requestStatus(
+          uri: fakeRequestStatusEndpoint,
+          accessToken: request.accessToken,
+        );
+
+        verify(mockClient.get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer ${request.accessToken}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        )).called(1);
+
+        expect(response.attributes.status, equals('Pending'));
+      });
+    });
+
+    group('Failed request status', () {
+      setUp(() {
+        request = StkPushRequest(
+            tillNumber: fakeTillNumber,
+            subscriber: Subscriber(phoneNumber: fakePhoneNumber),
+            amount: Amount(value: fakeAmount),
+            callbackUrl: '',
+            accessToken: fakeAccessToken);
+
+        stkService = StkService(
+          client: mockClient,
+          baseUrl: fakeBaseUrl,
+        );
+      });
+
+      test('returns failed', () async {
+        final uri = Uri.parse(fakeRequestStatusEndpoint);
+
+        final String jsonResponse =
+            File('./test/services/stk/request_status_error.json')
+                .readAsStringSync();
+
+        when(mockClient.get(
+          headers: {
+            'Authorization': 'Bearer ${request.accessToken}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          uri,
+        )).thenAnswer(
+          (_) async => http.Response(jsonResponse, 200),
+        );
+
+        final response = await stkService.requestStatus(
+          uri: fakeRequestStatusEndpoint,
+          accessToken: request.accessToken,
+        );
+
+        verify(mockClient.get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer ${request.accessToken}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        )).called(1);
+
+        expect(response.attributes.status, equals('Failed'));
+        expect(response.attributes.event?.errors, equals('An error occured.'));
+      });
+    });
+
+    group('Successful request status', () {
+      setUp(() {
+        request = StkPushRequest(
+            tillNumber: fakeTillNumber,
+            subscriber: Subscriber(phoneNumber: fakePhoneNumber),
+            amount: Amount(value: fakeAmount),
+            callbackUrl: '',
+            accessToken: fakeAccessToken);
+
+        stkService = StkService(
+          client: mockClient,
+          baseUrl: fakeBaseUrl,
+        );
+      });
+
+      test('returns sent', () async {
+        final uri = Uri.parse(fakeRequestStatusEndpoint);
+
+        final String jsonResponse =
+            File('./test/services/stk/request_status_sent.json')
+                .readAsStringSync();
+
+        when(mockClient.get(
+          headers: {
+            'Authorization': 'Bearer ${request.accessToken}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+          uri,
+        )).thenAnswer(
+          (_) async => http.Response(jsonResponse, 200),
+        );
+
+        final response = await stkService.requestStatus(
+          uri: fakeRequestStatusEndpoint,
+          accessToken: request.accessToken,
+        );
+
+        verify(mockClient.get(
+          uri,
+          headers: {
+            'Authorization': 'Bearer ${request.accessToken}',
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        )).called(1);
+
+        expect(response.attributes.status, equals('Sent'));
       });
     });
   });

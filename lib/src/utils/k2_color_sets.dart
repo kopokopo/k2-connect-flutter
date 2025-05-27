@@ -7,6 +7,8 @@ class K2Colors {
   static const lightBlue = Color(0xff6dedf7);
   static const turquoise = Color(0xff149187);
   static const error = Color(0xfff04438);
+  static const pending = Color(0xffeebe5d);
+  static const secondaryDarkBlue = Color(0xff4ba3de);
 
   static final MaterialColor materialDarkBlue = _createMaterialColor(darkBlue);
   static final MaterialColor materialLightBlue =

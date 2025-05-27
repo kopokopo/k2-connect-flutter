@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 
 import '../../../shared/k2_phone_number_form_field.dart';
 import '../../../utils/utils.dart';
