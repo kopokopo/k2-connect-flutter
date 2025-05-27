@@ -4,11 +4,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:k2_connect_flutter/src/shared/k2_connect_logger.dart';
 
+// ignore: constant_identifier_names
 enum HttpMethod { GET, POST, PUT, PATCH, DELETE }
 
 class ApiService {
   http.Client? _client;
-  String? _baseUrl;
 
   ApiService({http.Client? client}) : _client = client;
 
@@ -17,11 +17,10 @@ class ApiService {
     required String baseUrl,
     required String endpoint,
     Map<String, String>? headers,
-    Map<String, dynamic>? queryParameters,
+    dynamic queryParameters,
     int timeoutPeriod = 30,
   }) async {
     _client ??= http.Client();
-    _baseUrl = baseUrl;
 
     K2ConnectLogger.d('Making API call to $baseUrl/$endpoint');
 
@@ -53,7 +52,7 @@ class ApiService {
     HttpMethod requestType,
     Uri uri,
     Map<String, String>? headers,
-    Map<String, dynamic>? body,
+    dynamic body,
     int timeout,
   ) {
     switch (requestType) {
@@ -107,7 +106,8 @@ class ApiService {
 
       return fromJson(jsonData);
     } on FormatException catch (e) {
-      K2ConnectLogger.d('The response received was in an unexpected format: $e');
+      K2ConnectLogger.d(
+          'The response received was in an unexpected format: $e');
       throw Exception('The response received was in an unexpected format');
     } on TypeError catch (e) {
       K2ConnectLogger.d('Type error: $e');

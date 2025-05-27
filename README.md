@@ -79,6 +79,59 @@ final TokenResponse tokenResponse = await tokenService.requestAccessToken();
 print("Token response: $tokenResponse");
 ```
 
+### STK Push Payments
+
+To initiate an M-Pesa STK Push payment using K2 Connect, first create a [StkPushRequest] and pass it to the `stkService()` method along with a valid access token.
+
+The returned service exposes two main methods:
+
+#### 1. `requestPaymentBottomSheet(BuildContext context)`
+- Launches a modal bottom sheet where the customer can confirm and complete the payment.
+- Internally uses the request details to populate the UI:
+  - `companyName`: Optional display name.
+  - `accessToken`: Auth token.
+  - `baseUrl`: API environment URL.
+  - `tillNumber`: The recipient business till.
+  - `currency`: Currency code (e.g., "KES").
+  - `amount`: Amount to charge.
+  - `callbackUrl`: Your webhook URL.
+  - `metadata`: Optional payload.
+  - `onSuccess`: Callback on success.
+  - `onError`: Callback on failure.
+
+#### 2. `requestPayment(StkPushRequest request)`
+- Sends the STK Push request directly to the K2 API without showing any UI.
+- Use this for background operations or fully custom flows.
+
+**Preconditions**
+- Ensure you have called `K2ConnectFlutter.initialize(...)`.
+- You must get an access token using `K2ConnectFlutter.tokenService().requestAccessToken()`.
+
+**Example:**
+
+```dart
+final tokenService = K2ConnectFlutter.tokenService();
+final token = await tokenService.requestAccessToken();
+
+final request = StkPushRequest(
+  companyName: 'Acme Corp',
+  tillNumber: 'K000123',
+  amount: Amount(value: '100.00'),
+  callbackUrl: 'https://webhook.site/your-url',
+  metadata: {'order_id': '1234'},
+  accessToken: token.accessToken,
+);
+
+final stkService = K2ConnectFlutter.stkService();
+
+// Launch bottom sheet
+await stkService.requestPaymentBottomSheet(context, request: request);
+
+// Or perform background request
+final response = await stkService.requestPayment(request);
+```
+
+
 ## Additional information
 
 TODO: Tell users more about the package: where to find more information, how to
