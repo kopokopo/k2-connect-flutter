@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:k2_connect_flutter/k2_connect_flutter.dart';
@@ -34,19 +36,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
   @override
   void initState() {
     super.initState();
 
     _initializeK2Connect();
-  }
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
   }
 
   @override
@@ -56,24 +50,29 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+      body: ElevatedButton(
+        onPressed: () async {
+          final TokenService tokenService = K2ConnectFlutter.tokenService();
+          final tokenResponse = await tokenService.requestAccessToken();
+
+          final request = StkPushRequest(
+            companyName: 'Diba Med',
+            tillNumber: 'K676719',
+            amount: Amount(currency: 'KES', value: '1.00'),
+            callbackUrl: 'https://webhook.site/your-callback-url',
+            metadata: {'source': 'flutter-app'},
+            onSuccess: () => print('🟢 Payment success'),
+            onError: (error) => print('🔴 Payment error: $error'),
+            accessToken: tokenResponse.accessToken,
+          );
+
+          final stkService = K2ConnectFlutter.stkService(
+          );
+
+          // ignore: use_build_context_synchronously
+          await stkService.requestPaymentBottomSheet(context, request: request);
+        },
+        child: const Text('Pay now'),
       ),
     );
   }

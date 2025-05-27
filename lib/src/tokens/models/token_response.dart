@@ -2,7 +2,7 @@ class TokenResponse {
   final String accessToken;
   final String tokenType;
   final int expiresIn;
-  final int createdAt;
+  final String createdAt;
 
   TokenResponse({
     required this.accessToken,

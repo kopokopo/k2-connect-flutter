@@ -2,10 +2,15 @@ library;
 
 import 'package:k2_connect_flutter/k2_connect_credentials.dart';
 import 'package:k2_connect_flutter/src/shared/k2_connect_logger.dart';
+import 'package:k2_connect_flutter/src/stk/models/stk_push_request.dart';
+import 'package:k2_connect_flutter/src/stk/services/stk_service.dart';
 import 'package:k2_connect_flutter/src/tokens/token_service.dart';
 
 export 'k2_connect_credentials.dart';
 export 'src/tokens/models/token_response.dart';
+export 'src/stk/models/stk_push_request.dart';
+export 'src/shared/amount.dart';
+export 'src/stk/models/subscriber.dart';
 export 'src/tokens/token_service.dart';
 
 /// A singleton class that provides access to K2 Connect features.
@@ -15,7 +20,6 @@ export 'src/tokens/token_service.dart';
 class K2ConnectFlutter {
   static String? _baseUrl;
   static K2ConnectCredentials? _credentials;
-  static String? _accessToken;
 
   /// Initializes the K2 Connect Flutter client.
   ///
@@ -91,5 +95,68 @@ class K2ConnectFlutter {
 
   factory K2ConnectFlutter() {
     return _instance;
+  }
+
+  /// Creates and returns an instance of [StkService] configured to handle
+  /// M-Pesa STK Push payment requests using the K2 Connect API.
+  ///
+  /// The returned service exposes two main methods:
+  ///
+  /// ### 1. `requestPaymentBottomSheet(BuildContext context)`
+  /// - Launches a modal bottom sheet UI where the customer can confirm and complete
+  ///   the payment request interactively.
+  /// - Internally, it passes the following parameters to the bottom sheet widget:
+  ///   - [companyName]: Display name in the UI (optional).
+  ///   - [accessToken]: Auth token used for making requests.
+  ///   - [baseUrl]: API base URL (e.g., sandbox or production).
+  ///   - [tillNumber]: The receiving business till.
+  ///   - [currency]: The currency code, e.g. `"KES"`.
+  ///   - [amount]: Amount to be charged.
+  ///   - [callbackUrl]: Webhook URL for status updates.
+  ///   - [metadata]: Additional payload data.
+  ///   - [onSuccess]: Called if the payment completes successfully.
+  ///   - [onError]: Called if the payment fails or is rejected.
+  ///
+  /// ### 2. `requestPayment()`
+  /// - Sends the [StkPushRequest] payload directly to the Kopo Kopo API without UI.
+  /// - Use this if you don’t want to show a UI and have already collected customer input.
+  ///
+  /// ---
+  ///
+  /// **Preconditions**
+  /// - You must call `K2ConnectFlutter.initialize(...)` first.
+  /// - You must obtain a valid access token using
+  ///   `K2ConnectFlutter.tokenService().requestAccessToken()` before calling this.
+  ///
+  /// ---
+  ///
+  /// **Example usage:**
+  /// ```dart
+  /// final tokenService = K2ConnectFlutter.tokenService();
+  /// final token = await tokenService.requestAccessToken();
+  ///
+  /// final request = StkPushRequest(
+  ///   companyName: 'Acme Corp',
+  ///   tillNumber: 'K000123',
+  ///   amount: Amount(value: '100.00'),
+  ///   callbackUrl: 'https://webhook.site/your-url',
+  ///   metadata: {'order_id': '1234'},
+  ///   accessToken: token.accessToken
+  /// );
+  ///
+  /// final stkService = K2ConnectFlutter.stkService();
+  ///
+  /// // Launch UI
+  /// await stkService.requestPaymentBottomSheet(context, request: request);
+  ///
+  /// // Or just send directly
+  /// final response = await stkService.requestPayment(request);
+  /// ```
+  static StkService stkService() {
+    _checkIfRequiredValuesSet();
+
+    return StkService(
+      baseUrl: _baseUrl!,
+    );
   }
 }
