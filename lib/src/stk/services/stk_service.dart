@@ -5,7 +5,9 @@ import 'package:http/http.dart';
 import 'package:k2_connect_flutter/src/shared/api_service.dart';
 import 'package:k2_connect_flutter/src/shared/k2_connect_logger.dart';
 import 'package:k2_connect_flutter/src/stk/models/stk_push_request.dart';
+import 'package:k2_connect_flutter/src/stk/models/stk_push_request_status.dart';
 import 'package:k2_connect_flutter/src/stk/views/request_payment_bottom_sheet.dart';
+import 'package:k2_connect_flutter/src/utils/generate_url.dart';
 
 import '../../utils/utils.dart';
 
@@ -87,12 +89,68 @@ class StkService extends ApiService {
           'Content-Type': 'application/json',
         },
         requestType: HttpMethod.POST,
-        baseUrl: baseUrl,
-        endpoint: '${AppConfig.k2ConnectVersion}/incoming_payments',
+        url: generateUrl(
+            baseUrl, '${AppConfig.k2ConnectVersion}/incoming_payments'),
         queryParameters: jsonEncode(request.toJson()));
 
     K2ConnectLogger.d('StkService Request payment response: $response');
 
     return response;
+  }
+
+  /// Checks the status of a previously initiated STK Push payment request.
+  ///
+  /// This method is used to verify the result of an STK Push request by querying
+  /// the status endpoint provided in the `location` header of the payment initiation
+  /// response. This allows clients to determine whether a payment was received,
+  /// failed, or is still pending.
+  ///
+  /// The [uri] parameter is a full URL typically obtained via:
+  /// ```dart
+  /// final String uri = response.headers['location']!;
+  /// ```
+  ///
+  /// A valid [accessToken] must also be provided.
+  ///
+  /// Returns a [StkPushRequestStatus] object which contains the full details of the
+  /// payment, including status, timestamp, metadata, and callback links.
+  ///
+  /// Example:
+  /// ```dart
+  /// final status = await stkService.requestStatus(
+  ///   uri: result.headers['location']!,
+  ///   accessToken: accessToken,
+  /// );
+  ///
+  /// if (status.attributes.status == 'Received') {
+  ///   print('Payment successful');
+  /// } else if (status.attributes.status == 'Failed') {
+  ///   print('Payment failed');
+  /// }
+  /// ```
+  Future<StkPushRequestStatus> requestStatus({
+    required String uri,
+    required String accessToken,
+  }) async {
+    final response = await sendRequest(
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      requestType: HttpMethod.GET,
+      url: Uri.parse(uri),
+    );
+
+    if (response == null) {
+      throw Exception('No response received');
+    }
+
+    if (response.statusCode != 200) {
+      throw Exception('HTTP ${response.statusCode}: ${response.body}');
+    }
+
+    final json = jsonDecode(response.body);
+    return StkPushRequestStatus.fromJson(json['data']);
   }
 }

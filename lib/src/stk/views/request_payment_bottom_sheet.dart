@@ -7,9 +7,13 @@ import 'package:k2_connect_flutter/src/stk/models/stk_push_request.dart';
 import 'package:k2_connect_flutter/src/stk/models/subscriber.dart';
 import 'package:k2_connect_flutter/src/stk/services/stk_service.dart';
 
-import 'package:k2_connect_flutter/src/stk/views/widgets/error_request_payment.dart';
 import 'package:k2_connect_flutter/src/stk/views/widgets/loading_request_payment.dart';
+import 'package:k2_connect_flutter/src/stk/views/widgets/request_payment_alert.dart';
 import 'package:k2_connect_flutter/src/stk/views/widgets/request_payment_section.dart';
+import 'package:k2_connect_flutter/src/stk/views/widgets/request_payment_status.dart';
+import 'package:k2_connect_flutter/src/stk/views/widgets/success_request_payment.dart';
+
+import '../../utils/utils.dart';
 
 class RequestPaymentBottomSheet extends StatefulWidget {
   final String tillNumber;
@@ -88,16 +92,15 @@ class _RequestPaymentBottomSheetState extends State<RequestPaymentBottomSheet> {
       subscriber: Subscriber(phoneNumber: phoneNumber),
       amount: Amount(value: widget.amount, currency: widget.currency),
       callbackUrl: widget.callbackUrl,
-      accessToken: widget.accessToken
+      accessToken: widget.accessToken,
     );
 
-    final service = StkService(
-      baseUrl: widget.baseUrl,
-    );
+    final service = StkService(baseUrl: widget.baseUrl);
+
     final result = await service.requestPayment(stkRequest);
 
     if (result == null ||
-        (result.statusCode != 200 && result.statusCode != 201)) {
+        !(result.statusCode == 200 || result.statusCode == 201)) {
       final body = jsonDecode(result?.body ?? '{}');
       setState(() {
         errorMessage = body['error_message'] ?? 'Unknown error';
@@ -105,6 +108,50 @@ class _RequestPaymentBottomSheetState extends State<RequestPaymentBottomSheet> {
       });
       return;
     }
+
+    final location = result.headers['location'];
+    if (location == null) {
+      setState(() {
+        errorMessage = 'Missing status location header';
+        _requestState = RequestState.errorRequestStatus;
+      });
+      return;
+    }
+
+    setState(() => _requestState = RequestState.requestStatus);
+
+    Future<void> checkStatus([int retryCount = 0]) async {
+      final statusResponse = await service.requestStatus(
+        uri: location,
+        accessToken: widget.accessToken,
+      );
+
+      final status = statusResponse.attributes.status;
+
+      if (status == 'Received') {
+        setState(() => _requestState = RequestState.successfulRequestStatus);
+      } else if (status == 'Failed') {
+        setState(() {
+          errorMessage =
+              statusResponse.attributes.event?.errors ?? 'Payment failed';
+          _requestState = RequestState.errorRequestStatus;
+        });
+      } else if (status == 'Pending') {
+        if (retryCount <= 1) {
+          setState(() => _requestState = RequestState.pendingRequestStatus);
+          await Future.delayed(const Duration(seconds: 30));
+          await checkStatus(retryCount + 1);
+        } else {
+          setState(() {
+            errorMessage = 'Timed out while waiting for payment confirmation';
+            _requestState = RequestState.errorRequestStatus;
+          });
+        }
+      }
+    }
+
+    await Future.delayed(const Duration(seconds: 5));
+    await checkStatus();
   }
 
   Widget _buildBody() {
@@ -117,10 +164,26 @@ class _RequestPaymentBottomSheetState extends State<RequestPaymentBottomSheet> {
         );
       case RequestState.loadingRequestPayment:
         return LoadingRequestPayment();
+      case RequestState.requestStatus:
+        return RequestPaymentStatus();
+      case RequestState.successfulRequestStatus:
+        return SuccessRequestPayment(
+          companyName: widget.companyName,
+          amount: widget.amount,
+          onSuccess: widget.onSuccess,
+        );
+      case RequestState.pendingRequestStatus:
+        return RequestPaymentAlert(
+          iconColour: K2Colors.secondaryDarkBlue,
+          label: 'Payment pending',
+          description: 'Your payment is pending and wil be completed soon',
+        );
       case RequestState.errorRequestStatus:
-        return ErrorRequestPayment(
-          error: errorMessage,
-          onError: widget.onError,
+        return RequestPaymentAlert(
+          iconColour: K2Colors.error,
+          label: 'Payment declined',
+          description: errorMessage ?? 'An error occurred.',
+          action: widget.onError,
         );
     }
   }
@@ -129,5 +192,8 @@ class _RequestPaymentBottomSheetState extends State<RequestPaymentBottomSheet> {
 enum RequestState {
   requestPayment,
   loadingRequestPayment,
-  errorRequestStatus
+  requestStatus,
+  successfulRequestStatus,
+  errorRequestStatus,
+  pendingRequestStatus
 }

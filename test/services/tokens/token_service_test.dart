@@ -51,7 +51,7 @@ void main() {
           verify(mockCall()).called(1);
           expect(response.accessToken, equals('test-access-token'));
           expect(response.tokenType, equals('Bearer'));
-          expect(response.createdAt, equals(1010));
+          expect(response.createdAt, equals('1010'));
           expect(response.expiresIn, equals(10));
         });
       });

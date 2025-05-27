@@ -12,6 +12,7 @@ export 'src/stk/models/stk_push_request.dart';
 export 'src/shared/amount.dart';
 export 'src/stk/models/subscriber.dart';
 export 'src/tokens/token_service.dart';
+export 'src/stk/models/stk_push_request_status.dart';
 
 /// A singleton class that provides access to K2 Connect features.
 ///
@@ -110,7 +111,7 @@ class K2ConnectFlutter {
   ///   - [accessToken]: Auth token used for making requests.
   ///   - [baseUrl]: API base URL (e.g., sandbox or production).
   ///   - [tillNumber]: The receiving business till.
-  ///   - [currency]: The currency code, e.g. `"KES"`.
+  ///   - [currency]: The currency code, default `"KES"`.
   ///   - [amount]: Amount to be charged.
   ///   - [callbackUrl]: Webhook URL for status updates.
   ///   - [metadata]: Additional payload data.
@@ -121,6 +122,24 @@ class K2ConnectFlutter {
   /// - Sends the [StkPushRequest] payload directly to the Kopo Kopo API without UI.
   /// - Use this if you don’t want to show a UI and have already collected customer input.
   ///
+  /// ### 3. `requestStatus({ required String uri, required String accessToken })`
+  /// - Checks the status of a previously initiated STK Push request.
+  /// - Requires the full `uri` returned from the `Location` header of the initial payment request.
+  /// - Returns a strongly typed [StkPushRequestStatus] object containing status info, timestamps, metadata, and callback URLs.
+  /// - Useful for confirming if a transaction was completed, failed, or is still pending.
+  ///
+  /// Example:
+  /// ```dart
+  /// final statusUri = result.headers['location']!;
+  /// final status = await stkService.requestStatus(
+  ///   uri: statusUri,
+  ///   accessToken: token,
+  /// );
+  ///
+  /// if (status.attributes.status == 'Received') {
+  ///   print('Payment received');
+  /// }
+  /// ```
   /// ---
   ///
   /// **Preconditions**

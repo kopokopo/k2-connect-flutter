@@ -1,6 +1,7 @@
 import 'package:k2_connect_flutter/k2_connect_flutter.dart';
 import 'package:k2_connect_flutter/src/shared/api_service.dart';
 import 'package:k2_connect_flutter/src/tokens/models/revoke_token_request.dart';
+import 'package:k2_connect_flutter/src/utils/generate_url.dart';
 
 import '../shared/k2_connect_logger.dart';
 import 'models/token_request.dart';
@@ -31,8 +32,7 @@ class TokenService extends ApiService {
 
     final response = await sendRequest(
       requestType: HttpMethod.POST,
-      baseUrl: baseUrl,
-      endpoint: 'oauth/token',
+      url: generateUrl(baseUrl, 'oauth/token'),
       queryParameters: request.toJson(),
     );
 
@@ -64,8 +64,7 @@ class TokenService extends ApiService {
 
     final response = await sendRequest(
       requestType: HttpMethod.POST,
-      baseUrl: baseUrl,
-      endpoint: 'oauth/revoke',
+      url: generateUrl(baseUrl, 'oauth/revoke'),
       queryParameters: request.toJson(),
     );
 

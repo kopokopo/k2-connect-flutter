@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:k2_connect_flutter/src/stk/views/widgets/bottom_sheet_info.dart';
 
-import '../../../utils/utils.dart';
-
-class ErrorRequestPayment extends StatelessWidget {
-  final Function? onError;
-  final String? error;
-  const ErrorRequestPayment({
+class RequestPaymentAlert extends StatelessWidget {
+  final Color iconColour;
+  final String label;
+  final String description;
+  final Function? action;
+  const RequestPaymentAlert({
     super.key,
-    this.onError,
-    this.error,
+    required this.iconColour,
+    required this.label,
+    required this.description,
+    this.action,
   });
 
   @override
@@ -20,13 +22,13 @@ class ErrorRequestPayment extends StatelessWidget {
         padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: K2Colors.error.withValues(alpha: .2),
+          color: iconColour.withValues(alpha: .2),
         ),
         child: Container(
           padding: EdgeInsets.all(10),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: K2Colors.error,
+            color: iconColour,
           ),
           child: SvgPicture.asset(
             'assets/icons/alert-circle.svg',
@@ -48,7 +50,7 @@ class ErrorRequestPayment extends StatelessWidget {
                   ?.copyWith(fontSize: 18.0),
             ),
             const SizedBox(height: 12.0),
-            Text(error ?? 'An error occurred'),
+            Text(description),
             Padding(
               padding: EdgeInsets.only(top: 32),
               child: SizedBox(
@@ -56,7 +58,7 @@ class ErrorRequestPayment extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    onError!();
+                    action!();
                   },
                   child: Text('Done'),
                 ),

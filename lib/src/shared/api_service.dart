@@ -14,24 +14,21 @@ class ApiService {
 
   Future<http.Response?> sendRequest({
     required HttpMethod requestType,
-    required String baseUrl,
-    required String endpoint,
+    required Uri url,
     Map<String, String>? headers,
     dynamic queryParameters,
     int timeoutPeriod = 30,
   }) async {
     _client ??= http.Client();
 
-    K2ConnectLogger.d('Making API call to $baseUrl/$endpoint');
-
-    final uri = Uri.https(baseUrl, endpoint);
+    K2ConnectLogger.d('Making API call to $url');
 
     K2ConnectLogger.d(
-        'Request: $requestType $uri, Headers: $headers, Params: $queryParameters');
+        'Request: $requestType $url, Headers: $headers, Params: $queryParameters');
 
     try {
       final response = await _sendHttpRequest(
-          requestType, uri, headers, queryParameters, timeoutPeriod);
+          requestType, url, headers, queryParameters, timeoutPeriod);
       if (response?.statusCode == 401) {
         throw Exception('You are unauthorized to perform this request');
       }
