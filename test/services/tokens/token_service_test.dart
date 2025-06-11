@@ -39,7 +39,8 @@ void main() {
             File('./test/services/tokens/tokens_success.json')
                 .readAsStringSync();
 
-        mockCall() => mockClient.post(uri, body: tokenRequest.toJson());
+        Future<http.Response> mockCall() =>
+            mockClient.post(uri, body: tokenRequest.toJson());
 
         when(mockCall())
             .thenAnswer((_) async => http.Response(jsonResponse, 200));
@@ -58,7 +59,8 @@ void main() {
       test('throws an exception if status code is not 200', () async {
         final uri = Uri.https(fakeBaseUrl, '/oauth/token');
 
-        mockCall() => mockClient.post(uri, body: tokenRequest.toJson());
+        Future<http.Response> mockCall() =>
+            mockClient.post(uri, body: tokenRequest.toJson());
 
         when(mockCall()).thenAnswer((_) async => http.Response('{}', 400));
 

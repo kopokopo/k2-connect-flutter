@@ -1,5 +1,5 @@
-import 'package:k2_connect_flutter/k2_connect_flutter.dart';
-import 'package:k2_connect_flutter/src/shared/api_service.dart';
+import '../../k2_connect_flutter.dart';
+import '../shared/api_service.dart';
 
 import '../shared/k2_connect_logger.dart';
 import 'models/token_request.dart';

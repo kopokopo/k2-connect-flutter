@@ -1,0 +1,50 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - staging
+  pull_request:
+    # This will trigger for all pull requests
+    branches:
+      - '*'
+
+jobs:
+  analyze_and_test:
+    name: Analyze and Test
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout the code from the repository
+      - uses: actions/checkout@v4
+
+      # Step 2: Cache packages
+      - name: Cache packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.flutter
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+
+      # Step 3: Set up Flutter in the environment
+      - name: Set up Flutter
+        if: steps.cache-flutter.outputs.cache-hit != 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.3'  # Specify the Flutter version (e.g., 'stable', '2.10.3', etc.)
+
+      # Step 4: Copy the sample .env file to .env
+      - name: Copy .env sample to .env in the example folder
+        run: cp example/.env.sample example/.env
+
+      # Step 5: Install dependencies
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+
+      # Step 6: Run static code analysis
+      - run: flutter analyze
+
+      # Step 7: Run flutter tests
+      - run: flutter test

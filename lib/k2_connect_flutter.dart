@@ -1,8 +1,8 @@
 library;
 
-import 'package:k2_connect_flutter/k2_connect_credentials.dart';
-import 'package:k2_connect_flutter/src/shared/k2_connect_logger.dart';
-import 'package:k2_connect_flutter/src/tokens/token_service.dart';
+import 'k2_connect_credentials.dart';
+import 'src/shared/k2_connect_logger.dart';
+import 'src/tokens/token_service.dart';
 
 export 'k2_connect_credentials.dart';
 export 'src/tokens/models/token_response.dart';
@@ -15,7 +15,6 @@ export 'src/tokens/token_service.dart';
 class K2ConnectFlutter {
   static String? _baseUrl;
   static K2ConnectCredentials? _credentials;
-  static String? _accessToken;
 
   /// Initializes the K2 Connect Flutter client.
   ///

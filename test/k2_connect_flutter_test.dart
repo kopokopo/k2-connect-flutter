@@ -5,7 +5,7 @@ import 'package:k2_connect_flutter/src/shared/k2_connect_logger.dart';
 void main() {
   group('K2ConnectFlutter', () {
     const testBaseUrl = 'https://api.example.com';
-    var testCredentials = K2ConnectCredentials(
+    final testCredentials = K2ConnectCredentials(
       clientId: 'test-client-id',
       clientSecret: 'test-secret',
       apiKey: 'test-api-key',

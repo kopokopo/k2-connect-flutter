@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:k2_connect_flutter/k2_connect_flutter.dart';
@@ -92,6 +93,8 @@ class _MyHomePageState extends State<MyHomePage> {
     final TokenService tokenService = K2ConnectFlutter.tokenService();
     final tokenResponse = await tokenService.requestAccessToken();
 
-    print("Token response: $tokenResponse");
+    if (kDebugMode) {
+      print("Token response: $tokenResponse");
+    }
   }
 }

@@ -2,13 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:k2_connect_flutter/src/shared/k2_connect_logger.dart';
+import 'k2_connect_logger.dart';
 
 enum HttpMethod { GET, POST, PUT, PATCH, DELETE }
 
 class ApiService {
   http.Client? _client;
-  String? _baseUrl;
 
   ApiService({http.Client? client}) : _client = client;
 
@@ -21,7 +20,6 @@ class ApiService {
     int timeoutPeriod = 30,
   }) async {
     _client ??= http.Client();
-    _baseUrl = baseUrl;
 
     K2ConnectLogger.d('Making API call to $baseUrl/$endpoint');
 
