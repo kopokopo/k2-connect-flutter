@@ -1,5 +1,6 @@
 import 'package:k2_connect_flutter/k2_connect_flutter.dart';
 import 'package:k2_connect_flutter/src/shared/api_service.dart';
+import 'package:k2_connect_flutter/src/tokens/models/revoke_token_request.dart';
 
 import '../shared/k2_connect_logger.dart';
 import 'models/token_request.dart';
@@ -21,6 +22,8 @@ class TokenService extends ApiService {
   /// Throws an [Exception] if the credentials or base URL are not set,
   /// or if the request fails.
   Future<TokenResponse> requestAccessToken() async {
+    K2ConnectLogger.d('TokenService - Requesting access token');
+
     final request = TokenRequest(
       clientId: credentials.clientId,
       clientSecret: credentials.clientSecret,
@@ -33,11 +36,42 @@ class TokenService extends ApiService {
       queryParameters: request.toJson(),
     );
 
-    K2ConnectLogger.d('TokenService Response: ${response?.body}');
+    K2ConnectLogger.d(
+        'TokenService requestAccessToken response - ${response?.body}');
 
     return processResponse<TokenResponse>(
       response,
       (data) => TokenResponse.fromJson(data),
     );
+  }
+
+  /// Revokes a given access token using the configured credentials.
+  ///
+  /// @param[accessToken] The access token you want to revoke
+  ///
+  /// Does not return any value if request succeeds.
+  ///
+  /// Throws an [Exception] if the credentials or base URL are not set,
+  /// or if the request fails.
+  Future<void> revokeAccessToken(String accessToken) async {
+    K2ConnectLogger.d('TokenService - Revoking access token');
+
+    final request = RevokeTokenRequest(
+      clientId: credentials.clientId,
+      clientSecret: credentials.clientSecret,
+      accessToken: accessToken,
+    );
+
+    final response = await sendRequest(
+      requestType: HttpMethod.POST,
+      baseUrl: baseUrl,
+      endpoint: 'oauth/revoke',
+      queryParameters: request.toJson(),
+    );
+
+    K2ConnectLogger.d(
+        'TokenService revokeAccessToken response - ${response?.body}');
+
+    return processResponse(response, null);
   }
 }
