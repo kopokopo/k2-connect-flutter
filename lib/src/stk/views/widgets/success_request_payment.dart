@@ -71,7 +71,9 @@ class _SuccessRequestPaymentState extends State<SuccessRequestPayment> {
               text: TextSpan(
                 style: Theme.of(context).textTheme.displayMedium,
                 children: <TextSpan>[
-                  TextSpan(text: 'You have paid ${AppConfig.defaultDisplayCurrency} '),
+                  TextSpan(
+                      text:
+                          'You have paid ${AppConfig.defaultDisplayCurrency} '),
                   TextSpan(
                       text: widget.amount,
                       style: const TextStyle(fontWeight: FontWeight.bold)),

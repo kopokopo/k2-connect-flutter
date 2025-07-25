@@ -157,8 +157,8 @@ class _HomePageState extends State<HomePage> {
       amount: Amount(currency: 'KES', value: '1.00'),
       callbackUrl: 'https://webhook.site/your-callback-url',
       metadata: {'source': 'flutter-app'},
-      onSuccess: () => print('🟢 Payment success'),
-      onError: (error) => print('🔴 Payment error: $error'),
+      onSuccess: () => debugPrint('🟢 Payment success'),
+      onError: (error) => debugPrint('🔴 Payment error: $error'),
       accessToken: accessToken,
     );
 

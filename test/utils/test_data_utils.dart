@@ -12,4 +12,5 @@ final fakePhoneNumber = '254712345678';
 final fakeInvalidPhoneNumber = '2547123456782334';
 final fakeAmount = '10';
 final fakeCompanyName = 'Test Company';
-final fakeRequestStatusEndpoint = 'https://sandbox.kopokopo.com/api/v1/incoming_payments/91a36c47-346d-4f89-bab7-7d779x1864996df';
+final fakeRequestStatusEndpoint =
+    'https://sandbox.kopokopo.com/api/v1/incoming_payments/91a36c47-346d-4f89-bab7-7d779x1864996df';

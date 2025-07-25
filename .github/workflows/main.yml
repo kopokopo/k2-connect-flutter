@@ -4,8 +4,7 @@ on:
   push:
     branches:
       - main
-      - dev
-      - staging
+      - development
   pull_request:
     # This will trigger for all pull requests
     branches:
