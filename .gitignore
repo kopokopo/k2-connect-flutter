@@ -33,3 +33,5 @@ build/
 
 # FVM Version Cache
 .fvm/
+
+!example/pubspec.lock
