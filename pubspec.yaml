@@ -21,6 +21,10 @@ dev_dependencies:
   mockito: ^5.4.0
   build_runner: ^2.4.6
 
+dependency_overrides:
+  built_value: 8.6.3
+  analyzer: ^6.2.0
+
 flutter:
   assets:
     - assets/icons/
