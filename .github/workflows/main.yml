@@ -1,0 +1,77 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - staging
+  pull_request:
+    # This will trigger for all pull requests
+    branches:
+      - '*'
+
+jobs:
+  analyze_and_test:
+    name: Analyze and Test
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout the code from the repository
+      - uses: actions/checkout@v4
+
+      # Step 2: Cache packages
+      - name: Cache Flutter SDK and pub packages
+        id: cache-flutter
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.pub-cache
+            ~/.flutter
+          key: ubuntu-latest-flutter-3.27.3-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ubuntu-latest-flutter-3.27.3-
+            ubuntu-latest-flutter-
+
+      # Step 3: Set up Flutter in the environment
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.27.3'
+
+      # Step 4: Copy the sample .env file to .env
+      - name: Copy .env sample to .env in the example folder
+        run: cp example/.env.sample example/.env
+
+      # Step 5: Install dependencies
+      - run: flutter pub get
+      - run: dart run build_runner build --delete-conflicting-outputs
+
+      # Step 6: Validate Dart formatting (excluding mocks)
+      - name: Validate Dart format
+        run: |
+          files=$(find . -name "*.dart" \
+            ! -path "*/mocks/*" \
+            ! -name "*.mocks.dart")
+          if [ -n "$files" ]; then
+            dart format --output=none --set-exit-if-changed $files
+          fi
+
+      # Step 7: Run static code analysis
+      - run: flutter analyze
+
+      # Step 8: Run Flutter tests
+      - run: flutter test
+
+      # Step 9: Dry-run for Dart package publishing
+      # Revert any modified files before publish check
+      - name: Revert pubspec.lock changes in example
+        run: git checkout -- example/pubspec.lock
+
+      # Run dart pub publish dry-run
+      - name: Dart pub publish dry-run
+        run: dart pub publish --dry-run
+
+      # Step 10: Build the example app to validate integration
+      - name: Build example app
+        run: flutter build apk
+        working-directory: example
