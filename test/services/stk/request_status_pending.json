@@ -1,19 +1,23 @@
 {
     "data": {
-        "id": "51dcfc09-f775-4c0a-bf5d-d8e727cf3098",
+        "id": "e192ac63-8b24-4caf-8637-a2a9b75a14e6",
         "type": "incoming_payment",
         "attributes": {
-            "initiation_time": "2025-07-09T10:28:55.316+03:00",
+            "initiation_time": "2020-10-27T11:16:42.364+03:00",
             "status": "Pending",
             "event": {
                 "type": "Incoming Payment Request",
                 "resource": null,
                 "errors": null
             },
-            "metadata": null,
+            "metadata": {
+                "customer_id": "123456789",
+                "reference": "123456",
+                "notes": "Payment for invoice 12345"
+            },
             "_links": {
-                "callback_url": "https://webhook.site/your-callback-url",
-                "self": "https://api.kopokopo.com/api/v1/incoming_payments/51dcfc09-f775-4c0a-bf5d-d8e727cf3098"
+                "callback_url": "https://webhook.site/675d4ef4-0629-481f-83cd-d101f55e4bc8",
+                "self": "https://sandbox.kopokopo.com/api/v1/incoming_payments/e192ac63-8b24-4caf-8637-a2a9b75a14e6"
             }
         }
     }

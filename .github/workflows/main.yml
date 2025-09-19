@@ -26,16 +26,16 @@ jobs:
           path: |
             ~/.pub-cache
             ~/.flutter
-          key: ubuntu-latest-flutter-3.27.3-${{ hashFiles('**/pubspec.lock') }}
+          key: ubuntu-latest-flutter-3.35.4-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
-            ubuntu-latest-flutter-3.27.3-
+            ubuntu-latest-flutter-3.35.4-
             ubuntu-latest-flutter-
 
       # Step 3: Set up Flutter in the environment
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.3'
+          flutter-version: '3.35.4'
 
       # Step 4: Copy the sample .env file to .env
       - name: Copy .env sample to .env in the example folder
@@ -62,10 +62,6 @@ jobs:
       - run: flutter test
 
       # Step 9: Dry-run for Dart package publishing
-      # Revert any modified files before publish check
-      - name: Revert pubspec.lock changes in example
-        run: git checkout -- example/pubspec.lock
-
       # Run dart pub publish dry-run
       - name: Dart pub publish dry-run
         run: dart pub publish --dry-run

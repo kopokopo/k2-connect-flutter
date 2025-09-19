@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/k2_phone_number_form_field.dart';
 import '../../../utils/utils.dart';
+import 'k2_elevated_button.dart';
 
 class RequestPaymentSection extends StatelessWidget {
   final String amount;
@@ -25,11 +26,12 @@ class RequestPaymentSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Lipa na MPESA',
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineLarge
-                  ?.copyWith(fontSize: 20.0),
+              'Lipa na M-PESA',
+              style: TextStyle(
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'poppins',
+                  color: K2Colors.materialDarkBlue[500]),
             ),
             GestureDetector(
               onTap: () => Navigator.pop(context),
@@ -53,12 +55,19 @@ class RequestPaymentSection extends StatelessWidget {
             children: [
               Text(
                 'Amount to pay',
-                style: Theme.of(context).textTheme.displayLarge,
+                style: TextStyle(
+                    fontSize: 14.0,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'poppins',
+                    color: K2Colors.materialNavyBlue[400]),
               ),
               const SizedBox(height: 4.0),
               Text(
                 '${AppConfig.defaultDisplayCurrency} $amount',
-                style: Theme.of(context).textTheme.headlineLarge,
+                style: TextStyle(
+                    fontSize: 24.0,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'poppins'),
               ),
             ],
           ),
@@ -69,16 +78,9 @@ class RequestPaymentSection extends StatelessWidget {
           label: 'Enter M-PESA phone number',
         ),
         const SizedBox(height: 32.0),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: K2Colors.turquoise,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => requestPayment(),
-            child: Text('Proceed to pay'),
-          ),
+        K2ElevatedButton(
+          label: 'Proceed to pay',
+          onPressed: () => requestPayment(),
         ),
         const SizedBox(height: 24.0),
       ],

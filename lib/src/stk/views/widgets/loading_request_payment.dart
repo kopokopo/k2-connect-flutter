@@ -3,6 +3,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:k2_connect_flutter/src/stk/views/widgets/bottom_sheet_info.dart';
 
 import '../../../utils/utils.dart';
+import 'k2_outlined_button.dart';
 
 class LoadingRequestPayment extends StatelessWidget {
   const LoadingRequestPayment({super.key});
@@ -41,13 +42,11 @@ class LoadingRequestPayment extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Close'),
-            ),
-          )
+          K2OutlinedButton(
+            label: 'Close',
+            onPressed: () => Navigator.pop(context),
+          ),
+          const SizedBox(height: 24.0),
         ],
       ),
     );

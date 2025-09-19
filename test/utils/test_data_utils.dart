@@ -1,4 +1,4 @@
-import 'package:k2_connect_flutter/k2_connect_credentials.dart';
+import 'package:k2_connect_flutter/src/shared/k2_connect_credentials.dart';
 
 final fakeBaseUrl = 'api.example.com';
 final fakeCredentials = K2ConnectCredentials(
@@ -12,5 +12,14 @@ final fakePhoneNumber = '254712345678';
 final fakeInvalidPhoneNumber = '2547123456782334';
 final fakeAmount = '10';
 final fakeCompanyName = 'Test Company';
-final fakeRequestStatusEndpoint =
-    'https://sandbox.kopokopo.com/api/v1/incoming_payments/91a36c47-346d-4f89-bab7-7d779x1864996df';
+final String fakeRequestStatusEndpoint =
+    'https://example.test.com/api/v1/incoming_payments/my_test_reference';
+
+Map<String, String> testHeaders(accessToken) {
+  return {
+    'User-Agent': 'Kopokopo-Dart-SDK',
+    'Authorization': 'Bearer $accessToken',
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
+}

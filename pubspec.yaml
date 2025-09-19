@@ -3,6 +3,7 @@ description: "The official Kopo Kopo K2 connect SDK"
 version: 0.0.1
 homepage: https://github.com/kopokopo/k2-connect-flutter
 repository: https://github.com/kopokopo/k2-connect-flutter
+issue_tracker: https://github.com/kopokopo/k2-connect-flutter/issues
 
 environment:
   sdk: ^3.6.1
@@ -18,16 +19,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  mockito: ^5.4.0
+  mockito: ^5.5.1
   build_runner: ^2.4.6
-
-dependency_overrides:
-  built_value: 8.6.3
-  analyzer: ^6.2.0
 
 flutter:
   assets:
     - assets/icons/
-    - assets/
-
-  
+    - assets/logos/

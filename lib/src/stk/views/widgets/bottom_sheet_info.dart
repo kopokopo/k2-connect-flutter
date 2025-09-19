@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../utils/utils.dart';
+
 class BottomSheetInfo extends StatelessWidget {
   final Widget topIcon;
   final String? title;
@@ -31,19 +33,23 @@ class BottomSheetInfo extends StatelessWidget {
                 topIcon,
                 if (title?.isNotEmpty ?? false) ...[
                   const SizedBox(height: 32),
-                  Text(
-                    title!,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                  Text(title!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
                           fontSize: 18.0,
-                        ),
-                  ),
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'poppins',
+                          color: K2Colors.materialDarkBlue[500])),
                   const SizedBox(height: 24),
                 ],
                 if (description?.isNotEmpty ?? false) ...[
                   Text(
                     description!,
-                    style: Theme.of(context).textTheme.displayMedium,
+                    style: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'poppins',
+                        color: K2Colors.materialDarkBlue[400]),
                   ),
                 ],
                 const SizedBox(height: 20),

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:k2_connect_flutter/src/shared/k2_http_exception.dart';
 import 'package:k2_connect_flutter/src/tokens/models/revoke_token_request.dart';
 import 'package:k2_connect_flutter/src/tokens/models/token_request.dart';
 import 'package:k2_connect_flutter/src/tokens/token_service.dart';
@@ -69,15 +70,11 @@ void main() {
           when(mockCall()).thenAnswer((_) async => http.Response('{}', 400));
 
           expect(
-            () => tokenService.requestAccessToken(),
-            throwsA(
-              isA<Exception>().having(
-                (e) => e.toString(),
-                'message',
-                contains('HTTP error: 400'),
-              ),
-            ),
-          );
+              () async => await tokenService.requestAccessToken(),
+              throwsA(
+                isA<K2HttpException>()
+                    .having((e) => e.statusCode, 'statusCode', 400),
+              ));
 
           verify(mockCall()).called(1);
         });
@@ -123,15 +120,11 @@ void main() {
           when(mockCall()).thenAnswer((_) async => http.Response('{}', 400));
 
           expect(
-            () => tokenService.revokeAccessToken(fakeAccessToken),
-            throwsA(
-              isA<Exception>().having(
-                (e) => e.toString(),
-                'message',
-                contains('HTTP error: 400'),
-              ),
-            ),
-          );
+              () async => await tokenService.revokeAccessToken(fakeAccessToken),
+              throwsA(
+                isA<K2HttpException>()
+                    .having((e) => e.statusCode, 'statusCode', 400),
+              ));
 
           verify(mockCall()).called(1);
         });

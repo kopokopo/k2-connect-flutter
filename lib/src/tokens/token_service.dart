@@ -1,4 +1,5 @@
 import 'package:k2_connect_flutter/k2_connect_flutter.dart';
+import 'package:k2_connect_flutter/src/shared/api_response.dart';
 import 'package:k2_connect_flutter/src/shared/api_service.dart';
 import 'package:k2_connect_flutter/src/tokens/models/revoke_token_request.dart';
 import 'package:k2_connect_flutter/src/utils/generate_url.dart';
@@ -39,10 +40,10 @@ class TokenService extends ApiService {
     K2ConnectLogger.d(
         'TokenService requestAccessToken response - ${response?.body}');
 
-    return processResponse<TokenResponse>(
-      response,
-      (data) => TokenResponse.fromJson(data),
-    );
+    ApiResponse<TokenResponse> parsedResponse =
+        await processResponse(response, (data) => TokenResponse.fromJson(data));
+
+    return parsedResponse.data;
   }
 
   /// Revokes a given access token using the configured credentials.
@@ -71,6 +72,8 @@ class TokenService extends ApiService {
     K2ConnectLogger.d(
         'TokenService revokeAccessToken response - ${response?.body}');
 
-    return processResponse(response, null);
+    ApiResponse<Null> parsedResponse = await processResponse(response, null);
+
+    return parsedResponse.data;
   }
 }

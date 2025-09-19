@@ -18,7 +18,11 @@ class K2PhoneNumberFormField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.displayLarge,
+          style: TextStyle(
+              fontSize: 14.0,
+              fontWeight: FontWeight.w500,
+              fontFamily: 'poppins',
+              color: K2Colors.materialDarkBlue[600]),
         ),
         const SizedBox(height: 6.0),
         IntrinsicHeight(
@@ -47,7 +51,10 @@ class K2PhoneNumberFormField extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 8.0),
                       child: Text(
                         '+254',
-                        style: Theme.of(context).textTheme.displayMedium,
+                        style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'poppins'),
                       ),
                     ),
                   ],
@@ -63,11 +70,17 @@ class K2PhoneNumberFormField extends StatelessWidget {
                   maxLines: 1,
                   maxLength: 11,
                   inputFormatters: [KenyanPhoneNumberFormatter()],
-                  style: Theme.of(context).textTheme.displayMedium,
+                  style: TextStyle(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'poppins'),
                   decoration: InputDecoration(
                     hintText: '7xx xxx xxx',
                     counterText: '',
-                    hintStyle: Theme.of(context).textTheme.displayMedium,
+                    hintStyle: TextStyle(
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'poppins'),
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),

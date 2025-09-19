@@ -5,6 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:k2_connect_flutter/src/stk/views/widgets/bottom_sheet_info.dart';
 
 import '../../../utils/utils.dart';
+import 'k2_outlined_button.dart';
 
 class SuccessRequestPayment extends StatefulWidget {
   final String companyName;
@@ -69,36 +70,58 @@ class _SuccessRequestPaymentState extends State<SuccessRequestPayment> {
           children: [
             RichText(
               text: TextSpan(
-                style: Theme.of(context).textTheme.displayMedium,
+                style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 16.0,
+                    fontFamily: 'poppins',
+                    color: K2Colors.materialDarkBlue[400]),
                 children: <TextSpan>[
                   TextSpan(
-                      text:
-                          'You have paid ${AppConfig.defaultDisplayCurrency} '),
+                    text: 'You have paid ${AppConfig.defaultDisplayCurrency} ',
+                  ),
                   TextSpan(
                       text: widget.amount,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16.0,
+                          fontFamily: 'poppins')),
                   TextSpan(text: ' to ${widget.companyName}.'),
                 ],
               ),
             ),
             const SizedBox(height: 12.0),
-            Text(
-              'Redirecting 00:${_secondsRemaining.toString().padLeft(2, '0')}',
-              style: Theme.of(context).textTheme.displayLarge,
-            ),
-            Padding(
-              padding: EdgeInsets.only(top: 32),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    widget.onSuccess!();
-                  },
-                  child: Text('Done'),
-                ),
+            RichText(
+              text: TextSpan(
+                style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 14.0,
+                    fontFamily: 'poppins',
+                    color: K2Colors.materialDarkBlue[400]),
+                children: <TextSpan>[
+                  TextSpan(
+                    text: 'Redirecting ',
+                  ),
+                  TextSpan(
+                      text:
+                          '00:${_secondsRemaining.toString().padLeft(2, '0')}',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14.0,
+                          fontFamily: 'poppins')),
+                ],
               ),
             ),
+            const SizedBox(height: 32),
+            K2OutlinedButton(
+              label: 'Done',
+              onPressed: () {
+                Navigator.pop(context);
+                if (widget.onSuccess != null) {
+                  widget.onSuccess!();
+                }
+              },
+            ),
+            const SizedBox(height: 24.0),
           ],
         ),
       ),
