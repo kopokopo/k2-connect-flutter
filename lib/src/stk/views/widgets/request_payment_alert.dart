@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:k2_connect_flutter/src/stk/views/widgets/bottom_sheet_info.dart';
 
+import '../../../utils/utils.dart';
+import 'k2_outlined_button.dart';
+
 class RequestPaymentAlert extends StatelessWidget {
   final Color iconColour;
   final String label;
@@ -43,27 +46,33 @@ class RequestPaymentAlert extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              'Payment declined',
-              style: Theme.of(context)
-                  .textTheme
-                  .displayLarge
-                  ?.copyWith(fontSize: 18.0),
+              label,
+              style: TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'poppins',
+                  color: K2Colors.materialDarkBlue[500]),
             ),
             const SizedBox(height: 12.0),
-            Text(description),
-            Padding(
-              padding: EdgeInsets.only(top: 32),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    action!();
-                  },
-                  child: Text('Done'),
-                ),
-              ),
+            Text(
+              description,
+              style: TextStyle(
+                  fontFamily: 'poppins',
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.w400,
+                  color: K2Colors.materialDarkBlue[400]),
             ),
+            const SizedBox(height: 32.0),
+            K2OutlinedButton(
+              label: 'Done',
+              onPressed: () {
+                Navigator.pop(context);
+                if (action != null) {
+                  action!(description);
+                }
+              },
+            ),
+            const SizedBox(height: 24.0),
           ],
         ),
       ),

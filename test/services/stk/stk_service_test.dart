@@ -4,14 +4,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:k2_connect_flutter/src/shared/amount.dart';
-import 'package:k2_connect_flutter/src/stk/models/stk_push_request.dart';
-import 'package:k2_connect_flutter/src/stk/models/subscriber.dart';
+import 'package:k2_connect_flutter/k2_connect_flutter.dart';
+import 'package:k2_connect_flutter/src/shared/k2_http_exception.dart';
 import 'package:k2_connect_flutter/src/stk/services/stk_service.dart';
-import 'package:k2_connect_flutter/src/stk/views/widgets/request_payment_alert.dart';
+import 'package:k2_connect_flutter/src/stk/views/request_payment_bottom_sheet.dart';
 import 'package:k2_connect_flutter/src/stk/views/widgets/request_payment_section.dart';
-import 'package:k2_connect_flutter/src/stk/views/widgets/request_payment_status.dart';
 import 'package:k2_connect_flutter/src/stk/views/widgets/success_request_payment.dart';
+import 'package:k2_connect_flutter/src/utils/generate_url.dart';
 import 'package:k2_connect_flutter/src/utils/utils.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
@@ -22,183 +21,6 @@ import '../../utils/test_data_utils.dart';
 import 'stk_service_test.mocks.dart';
 
 void main() {
-  group('RequestPaymentSection', () {
-    late TextEditingController phoneNumberController;
-    late bool paymentRequested;
-
-    setUp(() {
-      phoneNumberController = TextEditingController();
-      paymentRequested = false;
-    });
-
-    Widget buildWidget() {
-      return MaterialApp(
-        home: Scaffold(
-          body: RequestPaymentSection(
-            amount: fakeAmount,
-            phoneNumberController: phoneNumberController,
-            requestPayment: () {
-              paymentRequested = true;
-            },
-          ),
-        ),
-      );
-    }
-
-    testWidgets('renders request payment bottom sheet correctly',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildWidget());
-
-      expect(find.text('Lipa na MPESA'), findsOneWidget);
-      expect(find.text('Amount to pay'), findsOneWidget);
-      expect(find.text('${AppConfig.defaultDisplayCurrency} $fakeAmount'),
-          findsOneWidget);
-      expect(find.text('Enter M-PESA phone number'), findsOneWidget);
-      expect(find.text('Proceed to pay'), findsOneWidget);
-    });
-
-    testWidgets('invokes requestPayment callback on button press',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(buildWidget());
-
-      await tester.tap(find.text('Proceed to pay'));
-      await tester.pump();
-
-      expect(paymentRequested, isTrue);
-    });
-
-    testWidgets('shows +254 prefix', (WidgetTester tester) async {
-      await tester.pumpWidget(buildWidget());
-
-      expect(find.text('+254'), findsOneWidget);
-    });
-
-    testWidgets('can enter phone number', (WidgetTester tester) async {
-      await tester.pumpWidget(buildWidget());
-
-      final phoneField = find.byType(TextFormField);
-      expect(phoneField, findsOneWidget);
-
-      await tester.enterText(phoneField, '712345678');
-      expect(phoneNumberController.text, '712 345 678');
-    });
-  });
-
-  group('Error request payment widget', () {
-    testWidgets('renders error message and calls onError on Done tap',
-        (WidgetTester tester) async {
-      bool onErrorCalled = false;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: RequestPaymentAlert(
-              iconColour: K2Colors.error,
-              label: 'Payment declined',
-              description: 'Test error occurred',
-              action: () {
-                onErrorCalled = true;
-              },
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('Payment declined'), findsOneWidget);
-      expect(find.text('Test error occurred'), findsOneWidget);
-      expect(find.text('Done'), findsOneWidget);
-
-      await tester.tap(find.text('Done'));
-      await tester.pumpAndSettle();
-
-      expect(onErrorCalled, isTrue);
-    });
-  });
-
-  group('Success request payment widget', () {
-    testWidgets('renders success message and countdown',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuccessRequestPayment(
-              companyName: fakeCompanyName,
-              amount: fakeAmount,
-              onSuccess: () {},
-            ),
-          ),
-        ),
-      );
-
-      final richTexts =
-          tester.widgetList<RichText>(find.byType(RichText)).toList();
-
-      final matches = richTexts.where((richText) {
-        final span = richText.text as TextSpan;
-        final combined = span.children?.map((s) => s.toPlainText()).join() ??
-            span.toPlainText();
-        return combined ==
-            'You have paid ${AppConfig.defaultDisplayCurrency} $fakeAmount to $fakeCompanyName.';
-      });
-
-      expect(matches.length, 1,
-          reason: 'Should find exactly one success message RichText');
-
-      final match = matches.single;
-      final span = match.text as TextSpan;
-      final combined = span.children?.map((s) => s.toPlainText()).join() ??
-          span.toPlainText();
-
-      expect(
-        combined,
-        'You have paid ${AppConfig.defaultDisplayCurrency} $fakeAmount to $fakeCompanyName.',
-      );
-      expect(find.textContaining('Redirecting'), findsOneWidget);
-      expect(find.text('Done'), findsOneWidget);
-    });
-
-    testWidgets('calls onSuccess when Done is tapped',
-        (WidgetTester tester) async {
-      bool onSuccessCalled = false;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SuccessRequestPayment(
-              companyName: fakeCompanyName,
-              amount: fakeAmount,
-              onSuccess: () {
-                onSuccessCalled = true;
-              },
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('Done'));
-      await tester.pumpAndSettle();
-
-      expect(onSuccessCalled, isTrue);
-    });
-  });
-
-  group('Request payment status widget', () {
-    testWidgets('shows progress indicator and message',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: RequestPaymentStatus(),
-          ),
-        ),
-      );
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-      expect(find.text('Processing payment'), findsOneWidget);
-    });
-  });
-
   group('StkService', () {
     late MockClient mockClient;
     late StkService stkService;
@@ -208,13 +30,49 @@ void main() {
       mockClient = MockClient();
     });
 
-    group('valid request payment', () {
-      setUp(() {
-        request = StkPushRequest(
-          tillNumber: fakeTillNumber,
-          subscriber: Subscriber(phoneNumber: fakePhoneNumber),
-          amount: Amount(value: fakeAmount),
-          callbackUrl: '',
+    group('requestPaymentBottomSheet()', () {
+      Future<void> pumpBottomSheet(WidgetTester tester,
+          {required StkService stkService,
+          required StkPushRequest stkPushRequest}) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => stkService.requestPaymentBottomSheet(
+                  context,
+                  stkPushRequest: stkPushRequest,
+                ),
+                child: const Text("Open"),
+              ),
+            ),
+          ),
+        );
+        await tester.tap(find.text("Open"));
+        await tester.pumpAndSettle();
+      }
+
+      void mockSuccessfulRequestPayment(
+          MockClient testMockClient, StkPushRequest stkPushRequest) {
+        // Mock successful requestPayment() request
+        when(testMockClient.post(
+          generateUrl(
+              fakeBaseUrl, '${AppConfig.k2ConnectVersion}/incoming_payments'),
+          headers: testHeaders(stkPushRequest.accessToken),
+          body: jsonEncode(stkPushRequest.toJson()),
+        )).thenAnswer(
+          (_) async => http.Response('', 201,
+              headers: {'location': fakeRequestStatusEndpoint}),
+        );
+      }
+
+      testWidgets(
+          "should show bottom sheet when requestPaymentBottomSheet is called",
+          (tester) async {
+        var stkPushRequest = StkPushRequest(
+          tillNumber: "123456",
+          companyName: fakeCompanyName,
+          amount: Amount(value: "1000"),
+          callbackUrl: "https://callback.test",
           accessToken: fakeAccessToken,
         );
 
@@ -222,48 +80,19 @@ void main() {
           client: mockClient,
           baseUrl: fakeBaseUrl,
         );
+        await pumpBottomSheet(tester,
+            stkService: stkService, stkPushRequest: stkPushRequest);
+
+        expect(find.byType(RequestPaymentBottomSheet), findsOneWidget);
+        expect(find.text("Powered by"), findsOneWidget);
       });
 
-      test('returns 201', () async {
-        final uri = Uri.https(fakeBaseUrl, '/api/v1/incoming_payments');
-
-        when(mockClient.post(
-          uri,
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode(request.toJson()),
-        )).thenAnswer(
-          (_) async => http.Response('', 201),
-        );
-
-        final response = await stkService.requestPayment(request);
-
-        verify(mockClient.post(
-          uri,
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode(request.toJson()),
-        )).called(1);
-
-        expect(response?.statusCode, equals(201));
-      });
-    });
-
-    group('invalid request payment', () {
-      setUp(() {
-        request = StkPushRequest(
-          tillNumber: fakeTillNumber,
-          subscriber: Subscriber(phoneNumber: fakeInvalidPhoneNumber),
-          amount: Amount(value: fakeAmount),
-          callbackUrl: '',
+      testWidgets("should start with RequestPaymentSection", (tester) async {
+        var stkPushRequest = StkPushRequest(
+          tillNumber: "123456",
+          companyName: fakeCompanyName,
+          amount: Amount(value: "1000"),
+          callbackUrl: "https://callback.test",
           accessToken: fakeAccessToken,
         );
 
@@ -271,258 +100,620 @@ void main() {
           client: mockClient,
           baseUrl: fakeBaseUrl,
         );
+
+        await pumpBottomSheet(tester,
+            stkService: stkService, stkPushRequest: stkPushRequest);
+
+        expect(find.byType(RequestPaymentSection), findsOneWidget);
+        expect(find.text('Lipa na M-PESA'), findsOneWidget);
+        expect(find.text('Amount to pay'), findsOneWidget);
+        expect(find.text('${AppConfig.defaultDisplayCurrency} 1000'),
+            findsOneWidget);
+        expect(find.text('Enter M-PESA phone number'), findsOneWidget);
+        expect(find.text('Proceed to pay'), findsOneWidget);
       });
 
-      test('returns 400 Bad request', () async {
-        final uri = Uri.https(fakeBaseUrl, '/api/v1/incoming_payments');
+      group('when the initial request payment succeeds', () {
+        testWidgets("should show SuccessRequestPayment on successful payment",
+            (tester) async {
+          var stkPushRequest = StkPushRequest(
+            tillNumber: "123456",
+            subscriber: Subscriber(phoneNumber: '712345678'),
+            companyName: fakeCompanyName,
+            amount: Amount(value: "1000"),
+            callbackUrl: "https://callback.test",
+            accessToken: fakeAccessToken,
+          );
 
-        final String jsonResponse =
-            File('./test/services/stk/request_payment_error.json')
-                .readAsStringSync();
+          mockSuccessfulRequestPayment(mockClient, stkPushRequest);
 
-        when(mockClient.post(
-          uri,
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode(request.toJson()),
-        )).thenAnswer(
-          (_) async => http.Response(jsonResponse, 400),
-        );
+          final String successJsonResponse =
+              File('./test/services/stk/request_status_success.json')
+                  .readAsStringSync();
 
-        final response = await stkService.requestPayment(request);
-        final body = jsonDecode(response?.body ?? '{}');
+          when(mockClient.get(
+            any,
+            headers: anyNamed('headers'),
+          )).thenAnswer((_) async => http.Response(successJsonResponse, 200));
 
-        verify(mockClient.post(
-          uri,
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode(request.toJson()),
-        )).called(1);
+          final stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
 
-        expect(body['error_message'],
-            equals('Subscriber phone number is an invalid number'));
-        expect(response?.statusCode, equals(400));
-      });
-    });
+          // Trigger requestPaymentBottomSheet
+          await pumpBottomSheet(tester,
+              stkService: stkService, stkPushRequest: stkPushRequest);
 
-    group('Valid request status', () {
-      setUp(() {
-        request = StkPushRequest(
-            tillNumber: fakeTillNumber,
-            subscriber: Subscriber(phoneNumber: fakePhoneNumber),
-            amount: Amount(value: fakeAmount),
-            callbackUrl: '',
-            accessToken: fakeAccessToken);
+          // Enter phone number and submit
+          await tester.enterText(find.byType(TextField), '712345678');
+          await tester.tap(find.byType(ElevatedButton)); // submit
+          await tester.pump(); // loading
 
-        stkService = StkService(
-          client: mockClient,
-          baseUrl: fakeBaseUrl,
-        );
+          // Wait for the processing of the response
+          await tester.pump(const Duration(seconds: 10));
+          await tester.pump(); // transition
+
+          expect(find.byType(SuccessRequestPayment), findsOneWidget);
+          expect(find.textContaining('Redirecting', findRichText: true),
+              findsOneWidget);
+          expect(
+              find.textContaining("You have paid KSh 1000 to $fakeCompanyName.",
+                  findRichText: true),
+              findsOneWidget);
+          expect(find.text('Done'), findsOneWidget);
+        });
       });
 
-      test('returns received', () async {
-        final uri = Uri.parse(fakeRequestStatusEndpoint);
+      testWidgets("should call onSuccess function when payment is successful",
+          (tester) async {
+        bool onSuccessCalled = false;
+        var stkPushRequest = StkPushRequest(
+            tillNumber: "123456",
+            subscriber: Subscriber(phoneNumber: '712345678'),
+            companyName: fakeCompanyName,
+            amount: Amount(value: "1000"),
+            callbackUrl: "https://callback.test",
+            accessToken: fakeAccessToken,
+            onSuccess: () => {onSuccessCalled = true});
 
-        final String jsonResponse =
-            File('./test/services/stk/request_status_received.json')
+        mockSuccessfulRequestPayment(mockClient, stkPushRequest);
+
+        final String successJsonResponse =
+            File('./test/services/stk/request_status_success.json')
                 .readAsStringSync();
 
         when(mockClient.get(
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          uri,
-        )).thenAnswer(
-          (_) async => http.Response(jsonResponse, 200),
-        );
+          any,
+          headers: anyNamed('headers'),
+        )).thenAnswer((_) async => http.Response(successJsonResponse, 200));
 
-        final response = await stkService.requestStatus(
-          uri: fakeRequestStatusEndpoint,
-          accessToken: request.accessToken,
-        );
-
-        verify(mockClient.get(
-          uri,
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        )).called(1);
-
-        expect(response.attributes.status, equals('Received'));
-      });
-    });
-
-    group('Pending request status', () {
-      setUp(() {
-        request = StkPushRequest(
-            tillNumber: fakeTillNumber,
-            subscriber: Subscriber(phoneNumber: fakePhoneNumber),
-            amount: Amount(value: fakeAmount),
-            callbackUrl: '',
-            accessToken: fakeAccessToken);
-
-        stkService = StkService(
+        final stkService = StkService(
           client: mockClient,
           baseUrl: fakeBaseUrl,
         );
+
+        // Trigger requestPaymentBottomSheet
+        await pumpBottomSheet(tester,
+            stkService: stkService, stkPushRequest: stkPushRequest);
+
+        // Enter phone number and submit
+        await tester.enterText(find.byType(TextField), '712345678');
+        await tester.tap(find.byType(ElevatedButton)); // submit
+        await tester.pump(); // loading
+
+        // Wait for the processing of the response
+        await tester.pump(const Duration(seconds: 10));
+        await tester.pump(); // transition
+        await tester.tap(find.text('Done'));
+        await tester.pumpAndSettle();
+
+        expect(onSuccessCalled, isTrue);
       });
 
-      test('returns pending', () async {
-        final uri = Uri.parse(fakeRequestStatusEndpoint);
+      testWidgets("should retry pending status once then succeed",
+          (tester) async {
+        var stkPushRequest = StkPushRequest(
+          tillNumber: "123456",
+          companyName: fakeCompanyName,
+          amount: Amount(value: "1000"),
+          callbackUrl: "https://callback.test",
+          accessToken: fakeAccessToken,
+          subscriber: Subscriber(phoneNumber: '711111111'),
+        );
 
-        final String jsonResponse =
+        mockSuccessfulRequestPayment(mockClient, stkPushRequest);
+
+        final String pendingJsonResponse =
+            File('./test/services/stk/request_status_pending.json')
+                .readAsStringSync();
+
+        final String successfulJsonResponse =
+            File('./test/services/stk/request_status_success.json')
+                .readAsStringSync();
+
+        final responses = [
+          http.Response(pendingJsonResponse, 200),
+          http.Response(successfulJsonResponse, 200),
+        ];
+
+        when(mockClient.get(
+          any,
+          headers: anyNamed('headers'),
+        )).thenAnswer((_) async => responses.removeAt(0));
+
+        final stkService = StkService(
+          client: mockClient,
+          baseUrl: fakeBaseUrl,
+        );
+
+        await pumpBottomSheet(tester,
+            stkService: stkService, stkPushRequest: stkPushRequest);
+
+        await tester.enterText(find.byType(TextField), "711111111");
+        await tester.tap(find.byType(ElevatedButton));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 10)); // first check
+        await tester.pump(const Duration(seconds: 30)); // retry
+        await tester.pump();
+
+        expect(find.byType(SuccessRequestPayment), findsOneWidget);
+      });
+
+      testWidgets("should show timeout error after max pending retries",
+          (tester) async {
+        var stkPushRequest = StkPushRequest(
+          tillNumber: "123456",
+          companyName: fakeCompanyName,
+          amount: Amount(value: "1000"),
+          callbackUrl: "https://callback.test",
+          accessToken: fakeAccessToken,
+          subscriber: Subscriber(phoneNumber: '711111111'),
+        );
+
+        mockSuccessfulRequestPayment(mockClient, stkPushRequest);
+
+        final String pendingJsonResponse =
             File('./test/services/stk/request_status_pending.json')
                 .readAsStringSync();
 
         when(mockClient.get(
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          uri,
-        )).thenAnswer(
-          (_) async => http.Response(jsonResponse, 200),
+          any,
+          headers: anyNamed('headers'),
+        )).thenAnswer((_) async => http.Response(pendingJsonResponse, 200));
+
+        final stkService = StkService(
+          client: mockClient,
+          baseUrl: fakeBaseUrl,
         );
 
-        final response = await stkService.requestStatus(
-          uri: fakeRequestStatusEndpoint,
-          accessToken: request.accessToken,
-        );
+        await pumpBottomSheet(tester,
+            stkService: stkService, stkPushRequest: stkPushRequest);
 
-        verify(mockClient.get(
-          uri,
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        )).called(1);
+        await tester.enterText(find.byType(TextField), "711111111");
+        await tester.tap(find.byType(ElevatedButton));
+        await tester.pump();
+        await tester.pump(const Duration(seconds: 10)); // first check
+        await tester.pump(const Duration(seconds: 30)); // retry
+        await tester.pump(const Duration(seconds: 30)); // retry
+        await tester.pump();
 
-        expect(response.attributes.status, equals('Pending'));
+        expect(find.text("Timed out while waiting for payment confirmation"),
+            findsOneWidget);
+      });
+      group('when the initial request payment fails', () {
+        testWidgets("should show error when requestPayment returns null",
+            (tester) async {
+          var stkPushRequest = StkPushRequest(
+            tillNumber: "123456",
+            companyName: fakeCompanyName,
+            amount: Amount(value: "1000"),
+            callbackUrl: "https://callback.test",
+            accessToken: fakeAccessToken,
+            subscriber: Subscriber(phoneNumber: '711111111'),
+          );
+
+          when(mockClient.post(
+            generateUrl(
+                fakeBaseUrl, '${AppConfig.k2ConnectVersion}/incoming_payments'),
+            headers: testHeaders(stkPushRequest.accessToken),
+            body: jsonEncode(stkPushRequest.toJson()),
+          )).thenAnswer((_) async => http.Response('', 201));
+
+          final stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+
+          await pumpBottomSheet(tester,
+              stkService: stkService, stkPushRequest: stkPushRequest);
+
+          await tester.enterText(find.byType(TextField), "711111111");
+          await tester.tap(find.byType(ElevatedButton));
+          await tester.pump();
+
+          expect(find.text("Missing status location header"), findsOneWidget);
+        });
+
+        testWidgets("should show error message from K2HttpException",
+            (tester) async {
+          var stkPushRequest = StkPushRequest(
+            tillNumber: "123456",
+            companyName: fakeCompanyName,
+            amount: Amount(value: "1000"),
+            callbackUrl: "https://callback.test",
+            accessToken: fakeAccessToken,
+            subscriber: Subscriber(phoneNumber: '711111111'),
+          );
+
+          final String jsonResponse =
+              File('./test/services/stk/request_payment_error.json')
+                  .readAsStringSync();
+
+          when(mockClient.post(
+            generateUrl(
+                fakeBaseUrl, '${AppConfig.k2ConnectVersion}/incoming_payments'),
+            headers: testHeaders(stkPushRequest.accessToken),
+            body: jsonEncode(stkPushRequest.toJson()),
+          )).thenAnswer(
+            (_) async => http.Response(jsonResponse, 400),
+          );
+
+          final stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+
+          await pumpBottomSheet(tester,
+              stkService: stkService, stkPushRequest: stkPushRequest);
+
+          await tester.enterText(find.byType(TextField), "711111111");
+          await tester.tap(find.byType(ElevatedButton));
+          await tester.pump();
+
+          expect(find.text("Subscriber phone number is an invalid number"),
+              findsOneWidget);
+        });
+
+        testWidgets(
+            "should call onError function when K2HttpException is thrown",
+            (tester) async {
+          bool onErrorCalled = false;
+          var stkPushRequest = StkPushRequest(
+              tillNumber: "123456",
+              companyName: fakeCompanyName,
+              amount: Amount(value: "1000"),
+              callbackUrl: "https://callback.test",
+              accessToken: fakeAccessToken,
+              onError: (error) => {onErrorCalled = true});
+
+          final String jsonResponse =
+              File('./test/services/stk/request_payment_error.json')
+                  .readAsStringSync();
+
+          when(mockClient.post(
+            any,
+            headers: anyNamed('headers'),
+            body: anyNamed('body'),
+          )).thenAnswer(
+            (_) async => http.Response(jsonResponse, 400),
+          );
+
+          final stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+
+          await pumpBottomSheet(tester,
+              stkService: stkService, stkPushRequest: stkPushRequest);
+
+          await tester.enterText(find.byType(TextField), "711111111");
+          await tester.tap(find.byType(ElevatedButton));
+          await tester.pump();
+          await tester.tap(find.text('Done'));
+          await tester.pumpAndSettle();
+
+          expect(onErrorCalled, isTrue);
+        });
+
+        testWidgets("should show generic error message on Exception",
+            (tester) async {
+          var stkPushRequest = StkPushRequest(
+              tillNumber: "123456",
+              companyName: fakeCompanyName,
+              amount: Amount(value: "1000"),
+              callbackUrl: "https://callback.test",
+              accessToken: fakeAccessToken);
+
+          when(mockClient.post(
+            any,
+            headers: anyNamed('headers'),
+            body: anyNamed('body'),
+          )).thenThrow(Exception("network error"));
+
+          final stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+
+          await pumpBottomSheet(tester,
+              stkService: stkService, stkPushRequest: stkPushRequest);
+
+          await tester.enterText(find.byType(TextField), "711111111");
+          await tester.tap(find.byType(ElevatedButton));
+          await tester.pump();
+
+          expect(
+              find.textContaining("An unknown error occured"), findsOneWidget);
+        });
+
+        testWidgets(
+            "should call onError function when a generic Exception is thrown",
+            (tester) async {
+          bool onErrorCalled = false;
+          var stkPushRequest = StkPushRequest(
+              tillNumber: "123456",
+              companyName: fakeCompanyName,
+              amount: Amount(value: "1000"),
+              callbackUrl: "https://callback.test",
+              accessToken: fakeAccessToken,
+              onError: (error) => {onErrorCalled = true});
+
+          when(mockClient.post(
+            any,
+            headers: anyNamed('headers'),
+            body: anyNamed('body'),
+          )).thenThrow(Exception("network error"));
+
+          final stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+
+          await pumpBottomSheet(tester,
+              stkService: stkService, stkPushRequest: stkPushRequest);
+
+          await tester.enterText(find.byType(TextField), "711111111");
+          await tester.tap(find.byType(ElevatedButton));
+          await tester.pump();
+          await tester.tap(find.text('Done'));
+          await tester.pumpAndSettle();
+
+          expect(onErrorCalled, isTrue);
+        });
       });
     });
 
-    group('Failed request status', () {
-      setUp(() {
-        request = StkPushRequest(
+    group('requestPayment()', () {
+      group('valid request payment', () {
+        setUp(() {
+          request = StkPushRequest(
             tillNumber: fakeTillNumber,
             subscriber: Subscriber(phoneNumber: fakePhoneNumber),
             amount: Amount(value: fakeAmount),
             callbackUrl: '',
-            accessToken: fakeAccessToken);
+            accessToken: fakeAccessToken,
+          );
 
-        stkService = StkService(
-          client: mockClient,
-          baseUrl: fakeBaseUrl,
-        );
+          stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+        });
+
+        test('returns 201', () async {
+          final uri = Uri.https(fakeBaseUrl, '/api/v1/incoming_payments');
+
+          when(mockClient.post(
+            uri,
+            headers: {
+              'User-Agent': 'Kopokopo-Dart-SDK',
+              'Authorization': 'Bearer ${request.accessToken}',
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(request.toJson()),
+          )).thenAnswer(
+            (_) async => http.Response('', 201,
+                headers: {'location': '$fakeBaseUrl/my_callback'}),
+          );
+
+          final locationUrl =
+              await stkService.requestPayment(stkPushRequest: request);
+
+          verify(mockClient.post(
+            uri,
+            headers: {
+              'User-Agent': 'Kopokopo-Dart-SDK',
+              'Authorization': 'Bearer ${request.accessToken}',
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(request.toJson()),
+          )).called(1);
+
+          expect(locationUrl, equals('$fakeBaseUrl/my_callback'));
+        });
       });
 
-      test('returns failed', () async {
-        final uri = Uri.parse(fakeRequestStatusEndpoint);
-
-        final String jsonResponse =
-            File('./test/services/stk/request_status_error.json')
-                .readAsStringSync();
-
-        when(mockClient.get(
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          uri,
-        )).thenAnswer(
-          (_) async => http.Response(jsonResponse, 200),
-        );
-
-        final response = await stkService.requestStatus(
-          uri: fakeRequestStatusEndpoint,
-          accessToken: request.accessToken,
-        );
-
-        verify(mockClient.get(
-          uri,
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        )).called(1);
-
-        expect(response.attributes.status, equals('Failed'));
-        expect(response.attributes.event?.errors, equals('An error occured.'));
-      });
-    });
-
-    group('Successful request status', () {
-      setUp(() {
-        request = StkPushRequest(
+      group('invalid request payment', () {
+        setUp(() {
+          request = StkPushRequest(
             tillNumber: fakeTillNumber,
-            subscriber: Subscriber(phoneNumber: fakePhoneNumber),
+            subscriber: Subscriber(phoneNumber: fakeInvalidPhoneNumber),
             amount: Amount(value: fakeAmount),
             callbackUrl: '',
-            accessToken: fakeAccessToken);
+            accessToken: fakeAccessToken,
+          );
 
-        stkService = StkService(
-          client: mockClient,
-          baseUrl: fakeBaseUrl,
-        );
+          stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+        });
+
+        test('returns 400 Bad request', () async {
+          final uri = Uri.https(fakeBaseUrl, '/api/v1/incoming_payments');
+
+          final String jsonResponse =
+              File('./test/services/stk/request_payment_error.json')
+                  .readAsStringSync();
+
+          when(mockClient.post(
+            uri,
+            headers: {
+              'User-Agent': 'Kopokopo-Dart-SDK',
+              'Authorization': 'Bearer ${request.accessToken}',
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(request.toJson()),
+          )).thenAnswer(
+            (_) async => http.Response(jsonResponse, 400),
+          );
+
+          expect(
+              () async =>
+                  await stkService.requestPayment(stkPushRequest: request),
+              throwsA(
+                isA<K2HttpException>().having(
+                    (e) => e.body['error_message'],
+                    'error_message',
+                    'Subscriber phone number is an invalid number'),
+              ));
+        });
+      });
+    });
+    group('requestStatus()', () {
+      group('Valid request status', () {
+        setUp(() {
+          request = StkPushRequest(
+              tillNumber: fakeTillNumber,
+              subscriber: Subscriber(phoneNumber: fakePhoneNumber),
+              amount: Amount(value: fakeAmount),
+              callbackUrl: '',
+              accessToken: fakeAccessToken);
+
+          stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+        });
+
+        test('returns success', () async {
+          final uri = Uri.parse(fakeRequestStatusEndpoint);
+
+          final String jsonResponse =
+              File('./test/services/stk/request_status_success.json')
+                  .readAsStringSync();
+
+          when(mockClient.get(
+            headers: testHeaders(request.accessToken),
+            uri,
+          )).thenAnswer(
+            (_) async => http.Response(jsonResponse, 200),
+          );
+
+          final response = await stkService.requestStatus(
+            uri: fakeRequestStatusEndpoint,
+            accessToken: request.accessToken,
+          );
+
+          verify(mockClient.get(
+            uri,
+            headers: testHeaders(request.accessToken),
+          )).called(1);
+
+          expect(response.attributes.status, equals('Success'));
+        });
       });
 
-      test('returns sent', () async {
-        final uri = Uri.parse(fakeRequestStatusEndpoint);
+      group('Pending request status', () {
+        setUp(() {
+          request = StkPushRequest(
+              tillNumber: fakeTillNumber,
+              subscriber: Subscriber(phoneNumber: fakePhoneNumber),
+              amount: Amount(value: fakeAmount),
+              callbackUrl: '',
+              accessToken: fakeAccessToken);
 
-        final String jsonResponse =
-            File('./test/services/stk/request_status_sent.json')
-                .readAsStringSync();
+          stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+        });
 
-        when(mockClient.get(
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          uri,
-        )).thenAnswer(
-          (_) async => http.Response(jsonResponse, 200),
-        );
+        test('returns pending', () async {
+          final uri = Uri.parse(fakeRequestStatusEndpoint);
 
-        final response = await stkService.requestStatus(
-          uri: fakeRequestStatusEndpoint,
-          accessToken: request.accessToken,
-        );
+          final String jsonResponse =
+              File('./test/services/stk/request_status_pending.json')
+                  .readAsStringSync();
 
-        verify(mockClient.get(
-          uri,
-          headers: {
-            'User-Agent': 'Kopokopo-Dart-SDK',
-            'Authorization': 'Bearer ${request.accessToken}',
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        )).called(1);
+          when(mockClient.get(
+            headers: testHeaders(request.accessToken),
+            uri,
+          )).thenAnswer(
+            (_) async => http.Response(jsonResponse, 200),
+          );
 
-        expect(response.attributes.status, equals('Sent'));
+          final response = await stkService.requestStatus(
+            uri: fakeRequestStatusEndpoint,
+            accessToken: request.accessToken,
+          );
+
+          verify(mockClient.get(
+            uri,
+            headers: testHeaders(request.accessToken),
+          )).called(1);
+
+          expect(response.attributes.status, equals('Pending'));
+        });
+      });
+
+      group('Failed request status', () {
+        setUp(() {
+          request = StkPushRequest(
+              tillNumber: fakeTillNumber,
+              subscriber: Subscriber(phoneNumber: fakePhoneNumber),
+              amount: Amount(value: fakeAmount),
+              callbackUrl: '',
+              accessToken: fakeAccessToken);
+
+          stkService = StkService(
+            client: mockClient,
+            baseUrl: fakeBaseUrl,
+          );
+        });
+
+        test('returns failed', () async {
+          final uri = Uri.parse(fakeRequestStatusEndpoint);
+
+          final String jsonResponse =
+              File('./test/services/stk/request_status_failed.json')
+                  .readAsStringSync();
+
+          when(mockClient.get(
+            headers: testHeaders(request.accessToken),
+            uri,
+          )).thenAnswer(
+            (_) async => http.Response(jsonResponse, 200),
+          );
+
+          final response = await stkService.requestStatus(
+            uri: fakeRequestStatusEndpoint,
+            accessToken: request.accessToken,
+          );
+
+          verify(mockClient.get(
+            uri,
+            headers: testHeaders(request.accessToken),
+          )).called(1);
+
+          expect(response.attributes.status, equals('Failed'));
+          expect(response.attributes.event?.errors,
+              equals('The initiator information is invalid.'));
+        });
       });
     });
   });

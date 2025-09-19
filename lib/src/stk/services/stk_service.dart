@@ -9,6 +9,7 @@ import 'package:k2_connect_flutter/src/stk/models/stk_push_request_status.dart';
 import 'package:k2_connect_flutter/src/stk/views/request_payment_bottom_sheet.dart';
 import 'package:k2_connect_flutter/src/utils/generate_url.dart';
 
+import '../../shared/api_response.dart';
 import '../../utils/utils.dart';
 
 class StkService extends ApiService {
@@ -37,7 +38,7 @@ class StkService extends ApiService {
   /// This method must be called with a valid [BuildContext], and typically
   /// runs in response to a user action (e.g. button tap).
   Future<void> requestPaymentBottomSheet(BuildContext context,
-      {required StkPushRequest request}) async {
+      {required StkPushRequest stkPushRequest}) async {
     await showModalBottomSheet<void>(
       backgroundColor: K2Theme.themeData(
         K2Theme.lightColorScheme,
@@ -57,16 +58,8 @@ class StkService extends ApiService {
             K2Colors.darkBlue,
           ),
           child: RequestPaymentBottomSheet(
-            companyName: request.companyName ?? '',
-            accessToken: request.accessToken,
-            baseUrl: baseUrl,
-            tillNumber: request.tillNumber,
-            currency: request.amount.currency,
-            amount: request.amount.value,
-            callbackUrl: request.callbackUrl,
-            metadata: request.metadata,
-            onSuccess: request.onSuccess,
-            onError: request.onError,
+            stkPushRequest: stkPushRequest,
+            stkService: this,
           ),
         );
       },
@@ -85,26 +78,29 @@ class StkService extends ApiService {
   ///
   /// Example:
   /// ```dart
-  /// final response = await stkService.requestPayment();
+  /// final response = await stkService.requestPayment(stkPushRequest: stkPushRequest);
   /// if (response?.statusCode == 201) {
   ///   print('Payment initiated successfully');
   /// }
   /// ```
-  Future<Response?> requestPayment(StkPushRequest request) async {
+  Future<String?> requestPayment(
+      {required StkPushRequest stkPushRequest}) async {
     final response = await sendRequest(
         otherHeaders: {
-          'Authorization': 'Bearer ${request.accessToken}',
+          'Authorization': 'Bearer ${stkPushRequest.accessToken}',
           'Accept': 'application/json',
           'Content-Type': 'application/json',
         },
         requestType: HttpMethod.POST,
         url: generateUrl(
             baseUrl, '${AppConfig.k2ConnectVersion}/incoming_payments'),
-        queryParameters: jsonEncode(request.toJson()));
+        queryParameters: jsonEncode(stkPushRequest.toJson()));
 
-    K2ConnectLogger.d('StkService Request payment response: $response');
+    K2ConnectLogger.d('StkService requestPayment response: $response');
 
-    return response;
+    final parsedResponse = await processResponse(response, null);
+
+    return parsedResponse.headers["location"];
   }
 
   /// Checks the status of a previously initiated STK Push payment request.
@@ -151,15 +147,9 @@ class StkService extends ApiService {
       url: Uri.parse(uri),
     );
 
-    if (response == null) {
-      throw Exception('No response received');
-    }
+    ApiResponse<StkPushRequestStatus> parsedResponse = await processResponse(
+        response, (data) => StkPushRequestStatus.fromJson(data['data']));
 
-    if (response.statusCode != 200) {
-      throw Exception('HTTP ${response.statusCode}: ${response.body}');
-    }
-
-    final json = jsonDecode(response.body);
-    return StkPushRequestStatus.fromJson(json['data']);
+    return parsedResponse.data;
   }
 }

@@ -151,9 +151,9 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    final request = StkPushRequest(
-      companyName: 'Diba Med',
-      tillNumber: 'K676719',
+    final stkPushRequest = StkPushRequest(
+      companyName: 'K2 Testing SDK',
+      tillNumber: 'K123456',
       amount: Amount(currency: 'KES', value: '1.00'),
       callbackUrl: 'https://webhook.site/your-callback-url',
       metadata: {'source': 'flutter-app'},
@@ -165,6 +165,7 @@ class _HomePageState extends State<HomePage> {
     final stkService = K2ConnectFlutter.stkService();
 
     // ignore: use_build_context_synchronously
-    await stkService.requestPaymentBottomSheet(context, request: request);
+    await stkService.requestPaymentBottomSheet(context,
+        stkPushRequest: stkPushRequest);
   }
 }

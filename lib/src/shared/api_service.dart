@@ -4,6 +4,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:k2_connect_flutter/src/shared/k2_connect_logger.dart';
 
+import 'api_response.dart';
+import 'k2_http_exception.dart';
+
 // ignore: constant_identifier_names
 enum HttpMethod { GET, POST, PUT, PATCH, DELETE }
 
@@ -13,6 +16,7 @@ const defaultHeaders = <String, String>{
 
 class ApiService {
   http.Client? _client;
+  bool _ownsClient = false;
 
   ApiService({http.Client? client}) : _client = client;
 
@@ -23,7 +27,10 @@ class ApiService {
     dynamic queryParameters,
     int timeoutPeriod = 30,
   }) async {
-    _client ??= http.Client();
+    if (_client == null) {
+      _client = http.Client();
+      _ownsClient = true;
+    }
 
     K2ConnectLogger.d('Making API call to $url');
 
@@ -85,11 +92,13 @@ class ApiService {
   }
 
   void _dispose() {
-    _client?.close();
-    _client = null;
+    if (_ownsClient) {
+      _client?.close();
+      _client = null;
+    }
   }
 
-  Future<T> processResponse<T>(
+  Future<ApiResponse<T>> processResponse<T>(
     http.Response? response,
     T Function(Map<String, dynamic>)? fromJson,
   ) async {
@@ -99,25 +108,32 @@ class ApiService {
     }
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      K2ConnectLogger.d('HTTP error: ${response.statusCode}');
-      throw Exception('HTTP error: ${response.statusCode}');
+      K2ConnectLogger.d(
+          'Received a HTTP error: ${response.statusCode} ${response.body} ${response.headers}');
+      final Map<String, dynamic> decodedBody = response.body.isEmpty
+          ? {}
+          : Map<String, dynamic>.from(jsonDecode(response.body));
+      throw K2HttpException(response.statusCode, decodedBody, response.headers);
     }
 
     try {
-      final jsonData = jsonDecode(response.body);
+      K2ConnectLogger.d(
+          'HTTP response: ${response.statusCode} ${response.body}');
+      final jsonData =
+          response.body.isNotEmpty ? jsonDecode(response.body) : {};
+      final parsedData = fromJson != null ? fromJson(jsonData) : null as T;
 
-      if (fromJson == null) {
-        return null as T;
-      }
-
-      return fromJson(jsonData);
+      return ApiResponse<T>(
+        data: parsedData,
+        headers: response.headers,
+      );
     } on FormatException catch (e) {
       K2ConnectLogger.d(
           'The response received was in an unexpected format: $e');
       throw Exception('The response received was in an unexpected format');
     } on TypeError catch (e) {
       K2ConnectLogger.d('Type error: $e');
-      throw Exception('Type error');
+      rethrow;
     } catch (e) {
       K2ConnectLogger.d('Unexpected error: $e');
       rethrow;
