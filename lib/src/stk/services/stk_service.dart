@@ -39,7 +39,10 @@ class StkService extends ApiService {
   Future<void> requestPaymentBottomSheet(BuildContext context,
       {required StkPushRequest request}) async {
     await showModalBottomSheet<void>(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: K2Theme.themeData(
+        K2Theme.lightColorScheme,
+        K2Colors.darkBlue,
+      ).scaffoldBackgroundColor,
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
@@ -48,17 +51,23 @@ class StkService extends ApiService {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24.0)),
       ),
       builder: (BuildContext context) {
-        return RequestPaymentBottomSheet(
-          companyName: request.companyName ?? '',
-          accessToken: request.accessToken,
-          baseUrl: baseUrl,
-          tillNumber: request.tillNumber,
-          currency: request.amount.currency,
-          amount: request.amount.value,
-          callbackUrl: request.callbackUrl,
-          metadata: request.metadata,
-          onSuccess: request.onSuccess,
-          onError: request.onError,
+        return Theme(
+          data: K2Theme.themeData(
+            K2Theme.lightColorScheme,
+            K2Colors.darkBlue,
+          ),
+          child: RequestPaymentBottomSheet(
+            companyName: request.companyName ?? '',
+            accessToken: request.accessToken,
+            baseUrl: baseUrl,
+            tillNumber: request.tillNumber,
+            currency: request.amount.currency,
+            amount: request.amount.value,
+            callbackUrl: request.callbackUrl,
+            metadata: request.metadata,
+            onSuccess: request.onSuccess,
+            onError: request.onError,
+          ),
         );
       },
     );
