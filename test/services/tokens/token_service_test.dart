@@ -41,7 +41,9 @@ void main() {
               File('./test/services/tokens/tokens_success.json')
                   .readAsStringSync();
 
-          mockCall() => mockClient.post(uri, body: tokenRequest.toJson());
+          mockCall() => mockClient.post(uri,
+              headers: {'User-Agent': 'Kopokopo-Dart-SDK'},
+              body: tokenRequest.toJson());
 
           when(mockCall())
               .thenAnswer((_) async => http.Response(jsonResponse, 200));
@@ -60,7 +62,9 @@ void main() {
         test('throws an exception if status code is not 200', () async {
           final uri = Uri.https(fakeBaseUrl, '/oauth/token');
 
-          mockCall() => mockClient.post(uri, body: tokenRequest.toJson());
+          mockCall() => mockClient.post(uri,
+              headers: {'User-Agent': 'Kopokopo-Dart-SDK'},
+              body: tokenRequest.toJson());
 
           when(mockCall()).thenAnswer((_) async => http.Response('{}', 400));
 
@@ -95,7 +99,9 @@ void main() {
               File('./test/shared/base_responses/empty_response.json')
                   .readAsStringSync();
 
-          mockCall() => mockClient.post(uri, body: revokeTokenRequest.toJson());
+          mockCall() => mockClient.post(uri,
+              headers: {'User-Agent': 'Kopokopo-Dart-SDK'},
+              body: revokeTokenRequest.toJson());
 
           when(mockCall())
               .thenAnswer((_) async => http.Response(jsonResponse, 200));
@@ -110,7 +116,9 @@ void main() {
         test('throws an exception if status code is not 200', () async {
           final uri = Uri.https(fakeBaseUrl, '/oauth/revoke');
 
-          mockCall() => mockClient.post(uri, body: revokeTokenRequest.toJson());
+          mockCall() => mockClient.post(uri,
+              headers: {'User-Agent': 'Kopokopo-Dart-SDK'},
+              body: revokeTokenRequest.toJson());
 
           when(mockCall()).thenAnswer((_) async => http.Response('{}', 400));
 
