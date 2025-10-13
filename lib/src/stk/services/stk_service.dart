@@ -92,7 +92,7 @@ class StkService extends ApiService {
   /// ```
   Future<Response?> requestPayment(StkPushRequest request) async {
     final response = await sendRequest(
-        headers: {
+        otherHeaders: {
           'Authorization': 'Bearer ${request.accessToken}',
           'Accept': 'application/json',
           'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ class StkService extends ApiService {
     required String accessToken,
   }) async {
     final response = await sendRequest(
-      headers: {
+      otherHeaders: {
         'Authorization': 'Bearer $accessToken',
         'Accept': 'application/json',
         'Content-Type': 'application/json',

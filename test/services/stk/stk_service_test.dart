@@ -230,6 +230,7 @@ void main() {
         when(mockClient.post(
           uri,
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -244,6 +245,7 @@ void main() {
         verify(mockClient.post(
           uri,
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -281,6 +283,7 @@ void main() {
         when(mockClient.post(
           uri,
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -296,6 +299,7 @@ void main() {
         verify(mockClient.post(
           uri,
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -333,6 +337,7 @@ void main() {
 
         when(mockClient.get(
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -350,6 +355,7 @@ void main() {
         verify(mockClient.get(
           uri,
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -384,6 +390,7 @@ void main() {
 
         when(mockClient.get(
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -401,6 +408,7 @@ void main() {
         verify(mockClient.get(
           uri,
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -435,6 +443,7 @@ void main() {
 
         when(mockClient.get(
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -452,6 +461,7 @@ void main() {
         verify(mockClient.get(
           uri,
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -487,6 +497,7 @@ void main() {
 
         when(mockClient.get(
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -504,6 +515,7 @@ void main() {
         verify(mockClient.get(
           uri,
           headers: {
+            'User-Agent': 'Kopokopo-Dart-SDK',
             'Authorization': 'Bearer ${request.accessToken}',
             'Accept': 'application/json',
             'Content-Type': 'application/json',

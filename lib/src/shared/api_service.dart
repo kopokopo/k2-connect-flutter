@@ -7,6 +7,10 @@ import 'package:k2_connect_flutter/src/shared/k2_connect_logger.dart';
 // ignore: constant_identifier_names
 enum HttpMethod { GET, POST, PUT, PATCH, DELETE }
 
+const defaultHeaders = <String, String>{
+  'User-Agent': 'Kopokopo-Dart-SDK',
+};
+
 class ApiService {
   http.Client? _client;
 
@@ -15,13 +19,18 @@ class ApiService {
   Future<http.Response?> sendRequest({
     required HttpMethod requestType,
     required Uri url,
-    Map<String, String>? headers,
+    Map<String, String>? otherHeaders,
     dynamic queryParameters,
     int timeoutPeriod = 30,
   }) async {
     _client ??= http.Client();
 
     K2ConnectLogger.d('Making API call to $url');
+
+    final headers = {
+      ...defaultHeaders,
+      if (otherHeaders != null) ...otherHeaders
+    };
 
     K2ConnectLogger.d(
         'Request: $requestType $url, Headers: $headers, Params: $queryParameters');
