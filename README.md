@@ -1,39 +1,27 @@
-<!--
-This README describes the package. If you publish this package to pub.dev,
-this README's contents appear on the landing page for your package.
+# Kopokopo Flutter SDK
 
-For information about how to write a good package README, see the guide for
-[writing package pages](https://dart.dev/tools/pub/writing-package-pages).
-
-For general information about developing packages, see the Dart guide for
-[creating packages](https://dart.dev/guides/libraries/create-packages)
-and the Flutter guide for
-[developing packages and plugins](https://flutter.dev/to/develop-packages).
--->
-
-TODO: Put a short description of the package here that helps potential users
-know whether this package might be useful for them.
+This is a package to assist developers in consuming Kopokopo's API
 
 ## Features
 
 TODO: List what your package can do. Maybe include images, gifs, or videos.
 
-## Getting started
+## Installation
 
-To get started, you will need to set up the required credentials. We recommend storing these
-credentials as environment variables in a `.env` file as shown below;
+To install run the following command on your project's directory:
 
-```dotenv
-CLIENT_ID=''
-CLIENT_SECRET=''
-API_KEY=''
+```
+flutter pub add k2_connect_flutter
 ```
 
-Next, you will need to initialize the `K2ConnectFlutter` SDK. This class is a singleton and should
-maintain its state across the entire app lifecycle. The class is initialized by calling its
-`initialize` method.
+## Initialisation
+The `K2ConnectFlutter` class is a singleton that maintains state across your app lifecycle.
 
 ```dart
+import 'package:k2_connect_flutter/k2_connect_flutter.dart';
+
+// Do not hard code your credentials. We recommend storing them in a .env file(see example app)
+
 await K2ConnectFlutter.initialize(
   baseUrl: 'sandbox.kopokopo.com',
   credentials: K2ConnectCredentials(
@@ -45,32 +33,19 @@ await K2ConnectFlutter.initialize(
 );
 ```
 
-Once initialized, you can get instances of various services as shown below;
+### After initialization, you can get instances of offered services as follows:
 
-- [TokensService](...): `K2ConnectFlutter.tokenService();`
+- [Tokens](#tokenservice) : `final TokenService tokenService = K2ConnectFlutter.tokenService();`
+- [STK PUSH](#stkservice) : `final StkService stkService = K2ConnectFlutter.stkService();`
 
 ## Usage
 
 ### Tokens
 
-An access token is needed for all K2Connect requests. You will need to maintain this token and pass
+To send any requests to Kopokopo's API you'll need an access token. You will need to securely maintain this token and pass
 it when making requests to Kopo Kopo APIs.
 
-To get the access token, use the `TokenService` as shown below;
-
 ```dart
-// Ensure K2ConnectFlutter is initialized
-await K2ConnectFlutter.initialize(
-  baseUrl: 'sandbox.kopokopo.com',
-  credentials: K2ConnectCredentials(
-    clientId: 'YOUR_CLIENT_ID',
-    clientSecret: 'YOUR_CLIENT_SECRET',
-    apiKey: 'YOUR_API_KEY',
-  ),
-  loggingEnabled: true, // Optionally enable logging. This is disabled by default
-);
-
-// Get the token service using K2ConnectFlutter
 final TokenService tokenService = K2ConnectFlutter.tokenService();
 
 // Get the access token using the token service
@@ -78,187 +53,174 @@ final TokenResponse tokenResponse = await tokenService.requestAccessToken();
 
 // Print the response
 print("Token response: $tokenResponse");
+
+// Securely store the tokenResponse and track expiry
 ```
 
-### STK Push Payments
+### STK PUSH
 
-To initiate an M-Pesa STK Push payment using K2 Connect, first create a [StkPushRequest] and pass it to the `stkService()` method along with a valid access token.
-
-The returned service exposes the following methods:
-
-#### 1. `requestPaymentBottomSheet(BuildContext context)`
-
-- Launches a modal bottom sheet where the customer can confirm and complete the payment.
-- Internally uses the request details to populate the UI:
-  - `companyName`: Optional display name.
-  - `accessToken`: Auth token.
-  - `baseUrl`: API environment URL.
-  - `tillNumber`: The recipient business till.
-  - `currency`: Currency code (e.g., "KES").
-  - `amount`: Amount to charge.
-  - `callbackUrl`: Your webhook URL.
-  - `metadata`: Optional payload.
-  - `onSuccess`: Callback on success.
-  - `onError`: Callback on failure.
-
-#### 2. `requestPayment(StkPushRequest request)`
-
-- Sends the STK Push request directly to the K2 API without showing any UI.
-- Use this for background operations or fully custom flows.
-
-#### `StkPushRequest`
-
-Defines the payload required to initiate an M-Pesa STK Push request.
-
-Fields:
-
-- `accessToken` (String): A valid access token required to authorize the request.
-- `paymentChannel` (String, default: "M-PESA STK PUSH"): The payment channel to use.
-- `tillNumber` (String): The till number that will receive the payment.
-- `subscriber` (Subscriber?): Object containing the customer's phone number.
-- `amount` (Amount): Object specifying the value and currency (e.g., KES).
-- `callbackUrl` (String): The URL to receive asynchronous status updates.
-- `metadata` (Map<String, dynamic>?, optional): Any additional information to associate with the request.
-- `companyName` (String?, optional): Display name shown in the bottom sheet UI.
-- `onSuccess` (Function?, optional): Callback invoked when the payment flow completes successfully.
-- `onError` (Function?, optional): Callback invoked when an error occurs.
-
-The `StkPushRequest` is validated on creation to ensure required fields are present and well-formed.
-
-#### 3. `requestStatus({ required String uri, required String accessToken })`
-
-- Checks the status of a previously initiated STK Push request.
-- Expects a `String` URI — typically from the `Location` header of a successful `requestPayment()` response.
-- Makes a `GET` request to check the current state of the transaction.
-- Does not display any UI — best suited for background polling or post-payment verification.
-- Returns a strongly typed `StkPushRequestStatus` object with status, timestamps, metadata, and links.
-
-#### `StkPushRequestStatus`
-
-Response structure returned when checking the status of an STK Push request.
-
-Fields:
-
-- `id` (String): Unique ID of the transaction.
-- `type` (String): The type of object, typically `"incoming_payment"`.
-- `attributes` (StkPushRequestAttributes): Nested object with full status details.
-
-#### `StkPushRequestAttributes`
-
-Fields:
-
-- `initiationTime` (String): Timestamp of request initiation.
-- `status` (String): The current status (`Received`, `Failed`, or `Pending`).
-- `event` (Event?): Optional event metadata with errors or updates.
-- `metadata` (Map<String, dynamic>?): Custom user metadata.
-- `links` (Links): Object containing callback and self URLs.
-
-For more information, please read <https://api-docs.kopokopo.com/#receive-payments-from-m-pesa-users-via-stk-push>
-
-**Example:**
+- Initiating a payment request with UI
 
 ```dart
-final statusUri = initResponse.headers['location']!;
-final status = await stkService.requestStatus(
-  uri: statusUri,
-  accessToken: token.accessToken,
-);
-
-if (status.attributes.status == 'Received') {
-  print('Payment confirmed or updated');
-}
-```
-
-### Types
-
-#### `Amount`
-
-Represents the monetary value and its currency to be used in the STK Push request.
-
-Fields:
-
-- `value` (String): The transaction amount (e.g., '100.00'). This field is required.
-- `currency` (String, optional): ISO 4217 currency code (e.g., 'KES'). Defaults to `'KES'` if not specified.
-
-Example:
-
-```dart
-Amount(value: '150.00'); // Uses default currency 'KES'
-Amount(value: '150.00', currency: 'KES');
-```
-
-#### `Subscriber`
-
-Represents the customer who will receive the STK Push request.
-
-Fields:
-
-- `phoneNumber` (String): **Required.** The customer's phone number in international format (e.g., `'254712345678'`).
-- `firstName` (String?, optional): The customer's first name. Useful for record keeping or personalization.
-- `lastName` (String?, optional): The customer's last name.
-- `email` (String?, optional): The customer's email address.
-
-**Example:**
-
-```dart
-Subscriber(phoneNumber: '254712345678');
-
-Subscriber(
-  phoneNumber: '254712345678',
-  firstName: 'Jane',
-  lastName: 'Doe',
-  email: 'jane.doe@example.com',
-);
-```
-
-#### `Event`
-
-Optional event attached to the status response.
-
-Fields:
-
-- `type` (String): Describes the event (e.g., "Incoming Payment Request").
-- `resource` (dynamic): Associated resource.
-- `errors` (dynamic): Any error messages or details.
-
-#### `Links`
-
-Fields:
-
-- `callbackUrl` (String): Your registered webhook URL.
-- `self` (String): URL to poll the status of this transaction.
-
-**Preconditions**
-
-- Ensure you have called `K2ConnectFlutter.initialize(...)`.
-- You must get an access token using `K2ConnectFlutter.tokenService().requestAccessToken()`.
-
-**Example:**
-
-```dart
-final tokenService = K2ConnectFlutter.tokenService();
-final token = await tokenService.requestAccessToken();
-
-final request = StkPushRequest(
-  companyName: 'Acme Corp',
-  tillNumber: 'K000123',
-  amount: Amount(value: '100.00'),
-  callbackUrl: 'https://webhook.site/your-url',
-  metadata: {'order_id': '1234'},
-  accessToken: token.accessToken,
+final stkPushRequest = StkPushRequest(
+  companyName: 'Test Company',
+  tillNumber: 'K12345',
+  amount: Amount(currency: 'KES', value: '1.00'),
+  callbackUrl: 'https://webhook.site/your-callback-url',
+  metadata: {'source': 'flutter-app'},
+  onSuccess: () => print('Payment success'),
+  onError: (error) => print('Payment error: $error'),
+  accessToken: 'myRand0mAcc3ssT0k3n', // the access token you requested
 );
 
 final stkService = K2ConnectFlutter.stkService();
 
-// Launch bottom sheet
-await stkService.requestPaymentBottomSheet(context, request: request);
-
-// Or perform background request
-final response = await stkService.requestPayment(request);
+await stkService.requestPaymentBottomSheet(context, stkPushRequest: stkPushRequest);
 ```
 
-## Additional information
+- Initiating a payment request without UI
 
-TODO: Tell users more about the package: where to find more information, how to
-contribute to the package, how to file issues, what response they can expect
-from the package authors, and more.
+```dart
+final stkPushRequest = StkPushRequest(
+  tillNumber: 'K12345',
+  subscriber: Subscriber(phoneNumber: '0712345678'),
+  amount: Amount(value: '10.00', currency: 'KES'),
+  callbackUrl: 'https://webhook.site/your-callback-url',
+  accessToken: 'myRand0mAcc3ssT0k3n', // the access token you requested
+);
+
+final stkService = K2ConnectFlutter.stkService();
+
+final String locationUrl = await stkService.requestPayment(stkPushRequest: stkPushRequest);
+```
+
+- To get the status of the STK push request 
+
+```dart
+final stkService = K2ConnectFlutter.stkService();
+
+final StkPushRequestStatus stkPushRequestStatus = await stkService.requestStatus(
+  uri: 'https://sandbox.kopokopo.com/api/v1/incoming_payments/d76265cd-0951-e511-80da-0aa34a9b2388',
+  accessToken: 'myRand0mAcc3ssT0k3n', // Use the already generated token
+);
+
+// Print the response
+print("StkPushRequestStatus: $stkPushRequestStatus");
+```
+
+## Services
+
+The methods are asynchronous.
+
+The only supported ISO currency code at the moment is: `KES`
+
+### `TokenService`
+
+- `tokenService.requestAccessToken()` to get an access token.
+
+  - The response will contain: `accessToken`, `tokenType`, `expiresIn` and `createdAt`
+
+NB: The access token is required to send subsequent requests
+
+- `tokenService.revokeAccessToken('my_access_token')` to revoke an access token.
+
+  - The response will be an empty body
+
+NB: A revoked access token cannot be used on subsequent requests
+
+### `StkService`
+
+#### Initiate an STK push request
+
+To initiate an M-Pesa STK Push payment, build a [StkPushRequest](#stkpushrequest) and call the STK service.
+
+There are two ways to initiate an STK push request:
+
+- `requestPaymentBottomSheet(BuildContext context, { StkPushRequest stkPushRequest })`
+  - Launches a modal bottom sheet where the customer can enter their details and complete the payment.
+
+- `requestPayment({ StkPushRequest stkPushRequest })`
+  - Sends the STK Push request directly to the API without showing any UI.
+  - Use this for background operations or fully custom flows.
+
+##### StkPushRequest
+- `tillNumber` (String): Your M-Pesa OR online payments till number from Kopo Kopo's Dashboard **REQUIRED**.
+- `subscriber` (Subscriber?): Object containing the customer's details.
+  - `phoneNumber` (String): The customer's phone number in international format (e.g., `'254712345678'`).  **REQUIRED for** `requestPayment`
+  - `firstName` (String?): The customer's first name. Useful for record keeping or personalization.
+  - `lastName` (String?): The customer's last name.
+  - `email` (String?): The customer's email address.
+- `amount` (Amount): Object specifying the value and currency (e.g., KES). **REQUIRED**
+  - `value` (String): The transaction amount (e.g., '100.00'). **REQUIRED**
+  - `currency` (String): ISO 4217 currency code. Defaults to `'KES'` if not specified. **REQUIRED**
+- `callbackUrl` (String): The URL to receive asynchronous status updates. **REQUIRED**
+- `paymentChannel` (String, default: "M-PESA STK PUSH"): The payment channel to use.
+- `metadata` (Map<String, dynamic>?): Any additional information to associate with the request.
+- `companyName` (String?): Display name shown in the bottom sheet UI. **RECOMMENDED for** `requestPaymentBottomSheet`
+- `onSuccess` (Function?): Callback invoked when the payment flow completes successfully. **RECOMMENDED for** `requestPaymentBottomSheet`
+- `onError` (Function?(String error)): Callback invoked when an error occurs. **RECOMMENDED for** `requestPaymentBottomSheet`.
+- `accessToken`: Gotten from the [`TokenService`](#tokenservice) response **REQUIRED**
+- `metadata`: (Map<String, dynamic>?) A map containing a maximum of 5 key value pairs
+
+#### Query the status of an STK Push request
+- `requestStatus({ required String uri, required String accessToken })`
+  - `uri`: The location url you got from the [requestPayment()](#initiate-an-stk-push-request) response. **REQUIRED**
+  - `accessToken`: Gotten from the [`TokenService`](#tokenservice) response **REQUIRED**
+
+Returns a strongly typed [StkPushRequestStatus](#stkpushrequeststatus)
+
+##### `StkPushRequestStatus`
+- `id` (String): Unique reference of the request.
+- `type` (String): The type of request (e.g., "incoming_payment").
+- `attributes` (StkPushRequestAttributes):
+  - `initiationTime` (String): The time the request was initiated at.
+  - `status` (String): The status of the request.
+  - `event` (Event?):
+    - `type` (String): Describes the event (e.g., "Incoming Payment Request").
+    - `resource` (dynamic): Associated resource, if payment is complete it will contain the transaction details.
+    - `errors` (String): If the request failed, this will contain the error message.
+  - `metadata` (Map<String, dynamic>?): Metadata that you sent with the request.
+  - `links` (Links): Object containing callback and self URLs.
+    - `callbackUrl` (String): The URL you provided when initiating the request.
+    - `self` (String): The location URL to for the request.
+
+For more information, please read <https://api-docs.kopokopo.com/#receive-payments-from-m-pesa-users-via-stk-push>
+
+
+### Responses and Results
+
+- All the post requests are asynchronous apart from `TokenService`. This means that the result will be posted to your custom callback url when the request is complete. The immediate response of the post requests contain the `location` url of the request you have sent which you can use to query the status.
+
+Note: The asynchronous results are processed like webhooks.
+
+## Contributing
+
+We welcome contributions from the community!
+
+See the [Contributing Guide](https://github.com/kopokopo/k2-connect-flutter/CONTRIBUTING.md) for details on:
+- How to set up your environment
+- Branching and commit guidelines
+- Running tests and submitting PRs
+
+## Issues & Support
+
+- Report bugs or request features on the issue tracker
+- Include Flutter/Dart version, reproduction steps, and logs where possible
+- Response times are on a best-effort basis
+- For urgent production issues, please use official Kopo Kopo support channels
+
+## Changelog
+
+See the [CHANGELOG.md](https://github.com/kopokopo/k2-connect-flutter/CHANGELOG.md) for release history.
+
+Latest release:
+
+#### 0.0.1 - Initial Release
+- Initial release of `k2_connect_flutter`
+- Basic SDK setup for K2 Connect
+- Token management (access token retrieval)
+- STK Push payment initiation:
+  - `requestPaymentBottomSheet` (with UI)
+  - `requestPayment` (direct API call)
+  - `requestStatus` (query request status)
+- Example Flutter app demonstrating integration
