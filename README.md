@@ -4,7 +4,7 @@ This is a package to assist developers in consuming Kopokopo's API
 
 ## Features
 
-TODO: List what your package can do. Maybe include images, gifs, or videos.
+![Demo of the payment flow](https://raw.githubusercontent.com/kopokopo/k2-connect-flutter/main/assets/gifs/demo.gif)
 
 ## Installation
 
@@ -197,7 +197,7 @@ Note: The asynchronous results are processed like webhooks.
 
 We welcome contributions from the community!
 
-See the [Contributing Guide](https://github.com/kopokopo/k2-connect-flutter/CONTRIBUTING.md) for details on:
+See the [Contributing Guide](https://github.com/kopokopo/k2-connect-flutter/blob/main/CONTRIBUTING.md) for details on:
 - How to set up your environment
 - Branching and commit guidelines
 - Running tests and submitting PRs
@@ -211,11 +211,11 @@ See the [Contributing Guide](https://github.com/kopokopo/k2-connect-flutter/CONT
 
 ## Changelog
 
-See the [CHANGELOG.md](https://github.com/kopokopo/k2-connect-flutter/CHANGELOG.md) for release history.
+See the [CHANGELOG.md](https://github.com/kopokopo/k2-connect-flutter/blob/main/CHANGELOG.md) for release history.
 
 Latest release:
 
-#### 0.0.1 - Initial Release
+#### 1.0.0 - Initial Release
 - Initial release of `k2_connect_flutter`
 - Basic SDK setup for K2 Connect
 - Token management (access token retrieval)

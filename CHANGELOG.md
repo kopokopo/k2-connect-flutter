@@ -5,7 +5,7 @@ This project adheres to [semantic versioning](https://semver.org/).
 
 ---
 
-# [0.0.1] - 2025-09-09 # TODO: Nico - update the date when going live
+# [1.0.0] - 2025-10-16
 ### Added
 - Initial release of `k2_connect_flutter`
 - Basic SDK setup for K2 Connect

@@ -1,6 +1,6 @@
 name: k2_connect_flutter
 description: "The official Kopo Kopo K2 connect SDK"
-version: 0.0.1
+version: 1.0.0
 homepage: https://github.com/kopokopo/k2-connect-flutter
 repository: https://github.com/kopokopo/k2-connect-flutter
 issue_tracker: https://github.com/kopokopo/k2-connect-flutter/issues
